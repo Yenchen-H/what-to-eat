@@ -241,6 +241,10 @@
   .hours-grid span { font-size: 14px; font-weight: 600; text-align: center; }
   .hours-grid input { min-height: 38px; padding: 6px 10px; font-size: 14px; }
 
+  .autofill { background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 12px; padding: 12px; margin-top: 10px; }
+  .autofill .btn { width: 100%; }
+  .autofill .hint { margin-top: 8px; }
+  .autofill.busy .btn { opacity: .5; pointer-events: none; }
   .toast {
     position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 60;
     transform: translateX(-50%) translateY(20px); opacity: 0; transition: .25s;
@@ -363,6 +367,11 @@
 <div class="modal-bg" id="editModal">
   <form class="modal" id="editForm" autocomplete="off">
     <h3 id="editTitle">新增餐廳</h3>
+    <div class="autofill">
+      <label class="btn" for="shotInput">📷 上傳 Google Map 截圖，自動填入</label>
+      <input type="file" id="shotInput" accept="image/*" multiple hidden>
+      <div class="hint" id="autofillStatus">可一次選多張，例如店家資訊一張、展開後的一週營業時間一張。辨識完請檢查再儲存。</div>
+    </div>
     <div class="field"><label>店名 *</label><input type="text" name="name" required></div>
     <div class="field"><label>地址（填完會自動判斷縣市與區）</label><input type="text" name="address"></div>
     <div class="field two">
@@ -401,7 +410,7 @@ const firebaseConfig = {
   messagingSenderId: "145169467169",
   appId: "1:145169467169:web:b42e15712af68b7b4f6060"
 };
-const FIREBASE_VERSION = "10.12.2";
+const FIREBASE_VERSION = "12.19.0";
 
 /* 唯一能登入管理餐廳的帳號（Firestore 安全規則也要填同一個） */
 const OWNER_EMAIL = "yan830904@nkust.edu.tw";
@@ -624,7 +633,7 @@ async function initFirebase() {
     import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")
   ]);
   const app = appM.initializeApp(firebaseConfig);
-  fb = { a: authM, f: fsM, auth: authM.getAuth(app), db: fsM.getFirestore(app) };
+  fb = { app, a: authM, f: fsM, auth: authM.getAuth(app), db: fsM.getFirestore(app) };
   state.firebaseReady = true;
   authM.getRedirectResult(fb.auth).catch(() => {});
   authM.onAuthStateChanged(fb.auth, async user => {
@@ -942,6 +951,7 @@ function openEdit(id) {
     return `<span>${DAY_NAMES[k]}</span><input type="text" data-day="${k}" value="${esc(v)}" placeholder="公休">`;
   }).join("");
   $("#editModal").classList.add("open");
+  setAutofill("可一次選多張，例如店家資訊一張、展開後的一週營業時間一張。辨識完請檢查再儲存。", false);
   setTimeout(() => f.name.focus(), 50);
 }
 function renderFormChips() {
@@ -949,6 +959,218 @@ function renderFormChips() {
   $("#formTags").innerHTML = allTags().map(t => `<button type="button" class="chip ${formTags.includes(t) ? "on" : ""}" data-action="form-tag" data-v="${esc(t)}">${esc(t)}</button>`).join("");
 }
 function closeEdit() { $("#editModal").classList.remove("open"); }
+
+/* =========================================================
+   10-1. 截圖自動填入
+   先用 Gemini（Firebase AI Logic）辨識；失敗或沒登入時，改用瀏覽器內建的 OCR（Tesseract.js）
+   ========================================================= */
+const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];  // 依序嘗試
+const TESSERACT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js";
+
+function setAutofill(msg, busy) {
+  $("#autofillStatus").textContent = msg;
+  document.querySelector(".autofill").classList.toggle("busy", !!busy);
+}
+
+/* 圖片縮小後轉成 base64（送給 Gemini 用，減少上傳量） */
+function imageToBase64(file, maxSide = 1600) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      resolve(c.toDataURL("image/jpeg", 0.9).split(",")[1]);
+    };
+    img.onerror = reject;
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+async function extractWithGemini(files) {
+  const aiM = await import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-ai.js`);
+  const ai = aiM.getAI(fb.app, { backend: new aiM.GoogleAIBackend() });
+  const prompt = `你會看到 Google 地圖上某一家餐廳的截圖（可能有多張，都是同一家店）。
+請讀出資訊，只輸出一個 JSON 物件，不要有其他文字。欄位如下：
+{
+  "name": "店名",
+  "address": "完整地址（不含郵遞區號）",
+  "phone": "電話",
+  "price": "依每人消費判斷：約 200 元以下填 \"$\"，200～500 元填 \"$$\"，500 元以上填 \"$$$\"；看不出來填空字串",
+  "tags": ["從這些選項挑 1～3 個最符合的：${allTags().join("、")}"],
+  "dishes": ["畫面上看得到的熱門或推薦菜色，沒有就給空陣列"],
+  "hours": {"mon": "...", "tue": "...", "wed": "...", "thu": "...", "fri": "...", "sat": "...", "sun": "..."}
+}
+hours 的規則：用 24 小時制，格式像 "11:00-14:00, 17:00-21:00"；當天休息填 "公休"；24 小時營業填 "00:00-24:00"；
+截圖中沒有那一天的資訊就填 null；如果截圖完全沒有營業時間，hours 整個填 null。
+看不到的欄位填空字串，不要自己編造。`;
+  const parts = [prompt];
+  for (const f of files) parts.push({ inlineData: { data: await imageToBase64(f), mimeType: "image/jpeg" } });
+
+  let lastErr;
+  for (const name of GEMINI_MODELS) {
+    try {
+      const model = aiM.getGenerativeModel(ai, { model: name, generationConfig: { responseMimeType: "application/json", temperature: 0 } });
+      const res = await model.generateContent(parts);
+      const text = res.response.text().replace(/^```(json)?|```$/g, "").trim();
+      return JSON.parse(text);
+    } catch (e) { lastErr = e; console.warn("Gemini", name, e); }
+  }
+  throw lastErr;
+}
+
+/* ---------- 內建 OCR ---------- */
+let ocrWorker = null;
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (window.Tesseract) return resolve();
+    const s = document.createElement("script");
+    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error("無法載入文字辨識工具"));
+    document.head.appendChild(s);
+  });
+}
+async function ocrText(files) {
+  await loadScript(TESSERACT_URL);
+  if (!ocrWorker) {
+    setAutofill("第一次使用，正在下載中文辨識資料（約 5MB，只需下載一次）…", true);
+    ocrWorker = await window.Tesseract.createWorker("chi_tra+eng", 1, {
+      logger: m => { if (m.status === "recognizing text") setAutofill(`文字辨識中… ${Math.round(m.progress * 100)}%`, true); }
+    });
+  }
+  let all = "";
+  for (const f of files) { const { data } = await ocrWorker.recognize(f); all += "\n" + data.text; }
+  return all;
+}
+
+/* 把 OCR 認出的文字，用規則整理成欄位 */
+const CN_DAY = { "一": "mon", "二": "tue", "三": "wed", "四": "thu", "五": "fri", "六": "sat", "日": "sun", "天": "sun" };
+const TAG_KEYWORDS = [
+  ["日式", /日式|日本|拉麵|壽司|丼|定食|居酒屋|烏龍麵|咖哩/], ["韓式", /韓式|韓國|拌飯|部隊鍋|炸雞/],
+  ["火鍋", /火鍋|鍋物|麻辣鍋|涮涮/], ["燒烤", /燒肉|燒烤|串燒|烤肉/], ["早午餐", /早午餐|早餐/],
+  ["素食", /素食|蔬食|蔬菜料理/], ["甜點飲料", /甜點|咖啡|飲料|茶飲|冰品|豆花|手搖|蛋糕/],
+  ["東南亞", /泰式|泰國|越南|南洋|印度|馬來|新加坡/], ["美式/西式", /義大利|美式|漢堡|牛排|西式|披薩|餐酒館|法式/],
+  ["台式小吃", /小吃|便當|滷肉飯|魯肉飯|麵線|肉圓|台式|臺式|自助餐|快餐/], ["中式", /中式|中華|川菜|港式|餃|牛肉麵|點心|粵菜/]
+];
+function parseOcrText(raw) {
+  // 全形轉半形、去掉中文字之間多餘的空白
+  let t = raw.replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\u3000/g, " ");
+  t = t.replace(/([\u4e00-\u9fff])[ \t]+(?=[\u4e00-\u9fff])/g, "$1").replace(/臺/g, "台");
+  const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
+  const out = { name: "", address: "", phone: "", price: "", tags: [], dishes: [], hours: null };
+
+  const phone = t.match(/(\+886[\s-]?\d[\d\s-]{7,11}\d|0\d{1,3}[\s-]?\d{3,4}[\s-]?\d{3,4})/);
+  if (phone) out.phone = phone[1].replace(/\s+/g, " ").trim();
+
+  const addrLine = lines.find(l => /(台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|苗栗|彰化|南投|雲林|屏東|宜蘭|花蓮|台東|澎湖|金門|連江)[市縣].{1,4}?[區鄉鎮市]/.test(l));
+  if (addrLine) {
+    const m = addrLine.match(/((台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|苗栗|彰化|南投|雲林|屏東|宜蘭|花蓮|台東|澎湖|金門|連江)[市縣].*)$/);
+    out.address = m ? m[1].replace(/\s+/g, "") : addrLine;
+  }
+
+  const pr = t.match(/\$\s?([\d,]+)\s*[-–~至]\s*\$?\s?([\d,]+)/) || t.match(/\$\s?([\d,]+)\s*\+/);
+  if (pr) {
+    const nums = [pr[1], pr[2]].filter(Boolean).map(n => Number(n.replace(/,/g, "")));
+    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+    out.price = avg < 200 ? "$" : avg <= 500 ? "$$" : "$$$";
+  } else {
+    const sym = t.match(/(^|[\s·・])(\${1,4})(?=[\s·・]|$)/m);
+    if (sym) out.price = sym[2].length <= 1 ? "$" : sym[2].length === 2 ? "$$" : "$$$";
+  }
+
+  out.tags = TAG_KEYWORDS.filter(([tag, re]) => re.test(t) && allTags().includes(tag)).map(([tag]) => tag).slice(0, 3);
+
+  // 營業時間：找出「星期一 / 週一」等標記，取到下一個標記之前的文字來解析
+  const marks = [...t.matchAll(/(星期|週|周|禮拜)([一二三四五六日天])/g)];
+  if (marks.length) {
+    const hours = {};
+    marks.forEach((m, i) => {
+      const key = CN_DAY[m[2]];
+      const seg = t.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : m.index + 120);
+      if (hours[key] !== undefined) return;
+      if (/24\s*小時/.test(seg)) { hours[key] = "00:00-24:00"; return; }
+      if (/休息|公休|未營業/.test(seg) && !/\d{1,2}[:.]\d{2}/.test(seg)) { hours[key] = "公休"; return; }
+      const times = [...seg.matchAll(/(上午|下午|中午|晚上|凌晨)?\s*(\d{1,2})[:.](\d{2})/g)].map(x => {
+        let h = Number(x[2]);
+        if ((x[1] === "下午" || x[1] === "晚上") && h < 12) h += 12;
+        return { h, m: x[3], p: x[1] };
+      });
+      const segs = [];
+      for (let j = 0; j + 1 < times.length; j += 2) {
+        const a = times[j], b = times[j + 1];
+        if (!b.p && (a.p === "下午" || a.p === "晚上") && b.h < 12 && b.h + 12 > a.h) b.h += 12;
+        segs.push(`${String(a.h).padStart(2, "0")}:${a.m}-${String(b.h).padStart(2, "0")}:${b.m}`);
+      }
+      if (segs.length) hours[key] = segs.join(", ");
+    });
+    if (Object.keys(hours).length) out.hours = hours;
+  }
+
+  // 店名：挑第一行「像店名」的文字（排除評分、價位、地址、按鈕文字等）
+  const skip = /路線|儲存|附近|傳送|分享|總覽|評論|簡介|菜單|相片|搜尋|Google|營業|休息|星期|週|\$|★|\d\.\d|\(\d|市.{1,4}區|電話|網站|預訂|外送|外帶|內用|google/i;
+  out.name = lines.find(l => /[\u4e00-\u9fff]/.test(l) && l.length >= 2 && l.length <= 30 && !skip.test(l) && !/^\d/.test(l)) || "";
+  return out;
+}
+
+/* 把辨識結果填進表單：空白欄位才填，營業時間有抓到就覆蓋 */
+function applyExtracted(d) {
+  const f = $("#editForm");
+  const filled = [];
+  const put = (field, val, label) => {
+    val = String(val || "").trim();
+    if (val && !f[field].value.trim()) { f[field].value = val; filled.push(label); }
+  };
+  put("name", d.name, "店名");
+  put("address", d.address, "地址");
+  const p = parseAddress(f.address.value);
+  put("city", d.city || p.city, "縣市");
+  put("district", d.district || p.district, "區");
+  put("phone", d.phone, "電話");
+  if (Array.isArray(d.dishes) && d.dishes.length && !f.dishes.value.trim()) { f.dishes.value = d.dishes.join("\n"); filled.push("推薦餐點"); }
+  if (PRICES.includes(d.price)) { formPrice = d.price; filled.push("價位"); }
+  if (Array.isArray(d.tags)) {
+    const valid = d.tags.filter(t => allTags().includes(t) && !formTags.includes(t));
+    if (valid.length) { formTags = [...formTags, ...valid]; filled.push("類型"); }
+  }
+  if (d.hours && typeof d.hours === "object") {
+    let any = false;
+    f.querySelectorAll("[data-day]").forEach(inp => {
+      const v = d.hours[inp.dataset.day];
+      if (v === null || v === undefined) return;
+      const segs = parseSegs(v);
+      inp.value = segs.map(([s, e]) => `${s}-${e}`).join(", ");
+      any = true;
+    });
+    if (any) filled.push("營業時間");
+  }
+  renderFormChips();
+  return filled;
+}
+
+async function autofillFromImages(files) {
+  if (!files.length) return;
+  let data = null, via = "";
+  try {
+    if (state.mode === "owner" && fb) {
+      setAutofill("AI 辨識中，請稍候…", true);
+      try { data = await extractWithGemini(files); via = "AI"; }
+      catch (e) {
+        const why = /api-not-enabled|not enabled|has not been used/i.test(String(e.message)) ? "Firebase 尚未開啟 AI Logic"
+          : /quota|429|resource-exhausted/i.test(String(e.message)) ? "今日免費額度已用完" : "AI 暫時無法使用";
+        setAutofill(`${why}，改用內建文字辨識…`, true);
+      }
+    }
+    if (!data) { data = parseOcrText(await ocrText(files)); via = "內建文字辨識"; }
+    const filled = applyExtracted(data);
+    setAutofill(filled.length
+      ? `已用${via}填入：${filled.join("、")}。請檢查是否正確，再補上沒抓到的欄位。`
+      : `${via}沒有讀到可用的資訊，請換一張更清楚的截圖，或手動填寫。`, false);
+  } catch (e) {
+    console.error(e);
+    setAutofill("辨識失敗：" + (e.message || e) + "。請手動填寫。", false);
+  }
+}
 async function submitEdit(e) {
   e.preventDefault();
   const f = $("#editForm");
@@ -1140,6 +1362,7 @@ $("#editForm").address.addEventListener("blur", e => {
   if (p.district && !f.district.value) f.district.value = p.district;
 });
 $("#editModal").addEventListener("click", e => { if (e.target.id === "editModal") closeEdit(); });
+$("#shotInput").addEventListener("change", e => { const files = [...e.target.files]; e.target.value = ""; autofillFromImages(files); });
 $("#newTagInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); document.querySelector('[data-action="add-tag"]').click(); } });
 
 /* 每分鐘更新一次「營業中」判斷 */
