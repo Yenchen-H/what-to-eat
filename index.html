@@ -2,1384 +2,1939 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<title>今天吃什麼</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>今天吃什麼？拉霸機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #f5f6f8;
-    --card: #ffffff;
-    --text: #1f2328;
-    --muted: #6b7280;
-    --line: #e5e7eb;
-    --accent: #f05a28;
-    --accent-soft: #fdeee8;
-    --good: #16a34a;
-    --warn: #d97706;
-    --bad: #dc2626;
-    --radius: 14px;
-    --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.04);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-    font-size: 15px;
-    line-height: 1.5;
-    -webkit-tap-highlight-color: transparent;
-  }
-  button, input, select, textarea { font: inherit; color: inherit; }
-  button { cursor: pointer; }
-  a { color: inherit; }
+/* ===== 色彩與基本設定 ===== */
+:root {
+  --bg: #1b0e0a;
+  --bg-2: #2a1510;
+  --red: #a31d1d;
+  --red-dark: #5e0f0f;
+  --gold: #e6b422;
+  --gold-light: #ffe08a;
+  --gold-dark: #9c7410;
+  --cream: #fff8e8;
+  --cream-2: #f5ead0;
+  --ink: #2b1a12;
+  --ink-soft: #6b5446;
+  --open: #2e8b3a;
+  --soon: #e67e22;
+  --closed: #8a8178;
+  --off: #c0392b;
+  --radius: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Noto Sans TC", system-ui, sans-serif;
+  background: radial-gradient(ellipse at top, #3a1a12 0%, var(--bg) 60%) fixed, var(--bg);
+  color: var(--cream);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+button { font-family: inherit; cursor: pointer; }
+a { color: inherit; }
 
-  /* ---------- 版面 ---------- */
-  header.top {
-    position: sticky; top: 0; z-index: 20;
-    background: rgba(255,255,255,.92);
-    backdrop-filter: blur(8px);
-    border-bottom: 1px solid var(--line);
-  }
-  .top-inner {
-    max-width: 560px; margin: 0 auto;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 16px;
-  }
-  .brand { font-size: 18px; font-weight: 700; }
-  .brand span { color: var(--accent); }
-  .user-box { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-  .avatar {
-    width: 30px; height: 30px; border-radius: 50%;
-    background: var(--accent-soft); color: var(--accent);
-    display: grid; place-items: center; font-weight: 700; overflow: hidden;
-  }
-  .avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* ===== 標題列 ===== */
+header {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  max-width: 1280px; margin: 0 auto; padding: 18px 16px 8px;
+}
+.brand h1 {
+  font-size: clamp(1.6rem, 5vw, 2.4rem); font-weight: 900; letter-spacing: .04em;
+  color: var(--gold-light);
+  text-shadow: 0 2px 0 var(--red-dark), 0 0 18px rgba(230,180,34,.45);
+}
+.brand .clock { color: var(--cream-2); opacity: .8; font-size: .95rem; }
+.icon-btn {
+  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0;
+  border: 2px solid var(--gold); background: var(--bg-2); color: var(--gold-light);
+  font-size: 1.3rem; display: grid; place-items: center;
+}
+.icon-btn:hover { background: var(--red-dark); }
 
-  main {
-    max-width: 560px; margin: 0 auto;
-    padding: 14px 16px calc(90px + env(safe-area-inset-bottom));
-  }
-  .page { display: none; }
-  .page.active { display: block; }
+/* ===== 版面 ===== */
+main {
+  max-width: 1280px; margin: 0 auto; padding: 8px 16px 40px;
+  display: grid; gap: 24px; grid-template-columns: 1fr;
+}
+@media (min-width: 960px) {
+  main { grid-template-columns: minmax(420px, 480px) 1fr; align-items: start; }
+  .left { position: sticky; top: 16px; }
+}
+.panel-title { font-size: 1.1rem; font-weight: 700; color: var(--gold-light); margin-bottom: 10px; }
 
-  nav.bottom {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
-    background: #fff; border-top: 1px solid var(--line);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .nav-inner { max-width: 560px; margin: 0 auto; display: flex; }
-  .nav-btn {
-    flex: 1; border: 0; background: none; padding: 9px 0 8px;
-    display: flex; flex-direction: column; align-items: center; gap: 2px;
-    font-size: 12px; color: var(--muted);
-  }
-  .nav-btn .ico { font-size: 20px; line-height: 1; }
-  .nav-btn.active { color: var(--accent); font-weight: 600; }
-  .nav-btn[hidden] { display: none; }
+/* ===== 篩選區 ===== */
+.filters {
+  background: rgba(255,255,255,.04); border: 1px solid rgba(230,180,34,.3);
+  border-radius: var(--radius); padding: 16px; margin-bottom: 20px;
+}
+.filter-row { margin-bottom: 12px; }
+.filter-row .label { font-size: .85rem; color: var(--cream-2); opacity: .75; margin-bottom: 6px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  border: 1.5px solid var(--gold-dark); background: transparent; color: var(--cream);
+  padding: 6px 14px; border-radius: 999px; font-size: .95rem; transition: .15s;
+}
+.chip:hover { border-color: var(--gold); }
+.chip.active { background: var(--gold); border-color: var(--gold); color: var(--ink); font-weight: 700; }
+.filter-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+.toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+.toggle input { display: none; }
+.toggle .track {
+  width: 46px; height: 26px; border-radius: 999px; background: #554; position: relative; transition: .2s;
+}
+.toggle .track::after {
+  content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px;
+  border-radius: 50%; background: #fff; transition: .2s;
+}
+.toggle input:checked + .track { background: var(--open); }
+.toggle input:checked + .track::after { left: 23px; }
+.count { font-size: .95rem; color: var(--gold-light); }
+.count b { font-size: 1.2rem; }
+.reset { background: none; border: none; color: var(--cream-2); text-decoration: underline; opacity: .7; font-size: .85rem; }
 
-  .card {
-    background: var(--card); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px;
-  }
-  .card h2 { font-size: 15px; margin: 0 0 10px; }
-  .label { font-size: 13px; color: var(--muted); margin: 12px 0 6px; }
-  .label:first-child { margin-top: 0; }
-  .hint { font-size: 13px; color: var(--muted); }
-  .banner {
-    background: #fff7ed; color: #9a3412; border: 1px solid #fed7aa;
-    border-radius: 10px; padding: 10px 12px; font-size: 13px; margin-bottom: 14px;
-  }
+/* ===== 拉霸機 ===== */
+.machine-wrap { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.machine {
+  position: relative; flex: 1; max-width: 420px;
+  background: linear-gradient(180deg, #c42a2a 0%, var(--red) 40%, var(--red-dark) 100%);
+  border: 6px solid var(--gold); border-radius: 28px 28px 20px 20px;
+  padding: 22px 18px 18px;
+  box-shadow: 0 0 0 3px var(--gold-dark), 0 18px 40px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.25);
+}
+.marquee {
+  text-align: center; font-weight: 900; font-size: 1.35rem; letter-spacing: .3em;
+  color: var(--gold-light); text-shadow: 0 0 10px rgba(255,224,138,.8);
+  margin-bottom: 12px;
+}
+/* 跑馬燈燈泡 */
+.bulbs { position: absolute; inset: 6px; pointer-events: none; }
+.bulb {
+  position: absolute; width: 9px; height: 9px; border-radius: 50%;
+  background: #ffe9a8; box-shadow: 0 0 6px 2px rgba(255,220,120,.8);
+  animation: blink 1.2s infinite;
+}
+.bulb.alt { animation-delay: .6s; }
+.machine.spinning .bulb { animation-duration: .25s; }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
 
-  /* ---------- 表單元件 ---------- */
-  select, input[type=text], input[type=tel], input[type=url], input[type=number], input[type=search], textarea {
-    width: 100%; border: 1px solid var(--line); border-radius: 10px;
-    padding: 10px 12px; background: #fff; min-height: 44px;
-  }
-  textarea { resize: vertical; min-height: 64px; }
-  select:focus, input:focus, textarea:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent); }
+.window {
+  position: relative; height: calc(var(--item-h) * 3); overflow: hidden;
+  background: var(--cream); border-radius: 12px;
+  border: 4px solid var(--gold-dark);
+  box-shadow: inset 0 10px 18px rgba(0,0,0,.35), inset 0 -10px 18px rgba(0,0,0,.35);
+  --item-h: 84px;
+}
+.window::before, .window::after {
+  content: ""; position: absolute; left: 0; right: 0; height: var(--item-h); z-index: 2; pointer-events: none;
+}
+.window::before { top: 0; background: linear-gradient(180deg, rgba(43,26,18,.55), rgba(43,26,18,0)); }
+.window::after { bottom: 0; background: linear-gradient(0deg, rgba(43,26,18,.55), rgba(43,26,18,0)); }
+.payline {
+  position: absolute; left: -2px; right: -2px; top: var(--item-h); height: var(--item-h); z-index: 3;
+  border-top: 3px solid var(--red); border-bottom: 3px solid var(--red); pointer-events: none;
+}
+.payline::before, .payline::after {
+  content: ""; position: absolute; top: 50%; transform: translateY(-50%);
+  border: 10px solid transparent;
+}
+.payline::before { left: 0; border-left-color: var(--red); }
+.payline::after { right: 0; border-right-color: var(--red); }
+.strip { position: absolute; left: 0; right: 0; top: 0; will-change: transform; }
+.strip.blur { filter: blur(1.5px); }
+.reel-item {
+  height: var(--item-h); display: flex; align-items: center; gap: 12px; padding: 0 26px;
+  color: var(--ink); border-bottom: 1px dashed rgba(107,84,70,.25);
+}
+.reel-item .thumb { width: 56px; height: 56px; font-size: 2rem; }
+.reel-item .name { font-weight: 900; font-size: 1.15rem; line-height: 1.25; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.reel-item.placeholder { justify-content: center; color: var(--ink-soft); font-weight: 700; }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
-  .chip {
-    border: 1px solid var(--line); background: #fff; border-radius: 999px;
-    padding: 7px 13px; font-size: 14px; min-height: 36px;
-    display: inline-flex; align-items: center; gap: 4px;
-  }
-  .chip .cnt { color: var(--muted); font-size: 12px; }
-  .chip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .chip.on .cnt { color: rgba(255,255,255,.85); }
+.spin-btn {
+  display: block; width: 100%; margin-top: 16px; padding: 14px;
+  font-size: 1.35rem; font-weight: 900; letter-spacing: .15em;
+  color: var(--ink); border: none; border-radius: 14px;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold) 55%, var(--gold-dark));
+  box-shadow: 0 6px 0 #6b4f08, 0 10px 20px rgba(0,0,0,.4);
+  transition: transform .08s, box-shadow .08s;
+}
+.spin-btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 1px 0 #6b4f08, 0 4px 10px rgba(0,0,0,.4); }
+.spin-btn:disabled { filter: grayscale(.6) brightness(.8); cursor: not-allowed; }
+.hint { text-align: center; margin-top: 10px; min-height: 1.4em; color: var(--gold-light); font-size: .95rem; }
 
-  .switch-row { display: flex; align-items: center; justify-content: space-between; min-height: 40px; }
-  .switch { position: relative; width: 48px; height: 28px; flex: none; }
-  .switch input { opacity: 0; width: 0; height: 0; }
-  .switch .slider {
-    position: absolute; inset: 0; background: #d1d5db; border-radius: 999px; transition: .2s;
-  }
-  .switch .slider::before {
-    content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px;
-    background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 2px rgba(0,0,0,.2);
-  }
-  .switch input:checked + .slider { background: var(--accent); }
-  .switch input:checked + .slider::before { transform: translateX(20px); }
+/* 拉桿 */
+.lever {
+  position: relative; width: 44px; height: 220px; border: none; background: none; flex-shrink: 0;
+  align-self: center; touch-action: none;
+}
+.lever .base {
+  position: absolute; left: 0; bottom: 40px; width: 22px; height: 70px;
+  background: linear-gradient(90deg, var(--gold-dark), var(--gold), var(--gold-dark));
+  border-radius: 0 8px 8px 0;
+}
+.lever .arm {
+  position: absolute; left: 14px; bottom: 75px; width: 12px; height: 120px;
+  background: linear-gradient(90deg, #888, #eee, #888); border-radius: 6px;
+  transform-origin: bottom center; transition: transform .25s cubic-bezier(.3,1.6,.6,1);
+}
+.lever .ball {
+  position: absolute; left: -10px; top: -26px; width: 32px; height: 32px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #ff8a8a, #d62020 55%, #7a0b0b);
+  box-shadow: 0 4px 10px rgba(0,0,0,.5);
+}
+.lever.pulled .arm { transform: scaleY(-.55); transition: transform .18s ease-in; }
+.lever:disabled { cursor: not-allowed; opacity: .85; }
 
-  .btn {
-    border: 1px solid var(--line); background: #fff; border-radius: 10px;
-    padding: 9px 14px; min-height: 44px; font-weight: 600;
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    text-decoration: none;
-  }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-  .btn.ghost { border-color: transparent; background: transparent; }
-  .btn.small { min-height: 34px; padding: 5px 10px; font-size: 13px; }
-  .btn:disabled { opacity: .45; cursor: not-allowed; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
-  .btn-row .btn { flex: 1; }
+/* ===== 縮圖（照片或預設圖示） ===== */
+.thumb {
+  flex-shrink: 0; border-radius: 12px; overflow: hidden; display: grid; place-items: center;
+  background: var(--cream-2);
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  /* ---------- 拉霸機 ---------- */
-  .count-line { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-  .count-line b { font-size: 22px; color: var(--accent); }
-  .excluded-line { font-size: 12px; color: var(--muted); margin-top: 6px; }
-  .excluded-line button { border: 0; background: none; color: var(--accent); padding: 0 2px; font-size: 12px; }
+/* ===== 餐廳清單 ===== */
+.list-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.list-head small { color: var(--cream-2); opacity: .7; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+.card {
+  background: var(--cream); color: var(--ink); border-radius: var(--radius);
+  padding: 14px; display: flex; gap: 12px; text-align: left; border: none; width: 100%;
+  box-shadow: 0 4px 14px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s;
+}
+.card:hover { transform: translateY(-3px); box-shadow: 0 8px 22px rgba(0,0,0,.45); }
+.card.dim { opacity: .55; }
+.card .thumb { width: 64px; height: 64px; font-size: 2.1rem; }
+.card .info { min-width: 0; flex: 1; }
+.card .name { font-weight: 700; font-size: 1.02rem; line-height: 1.35; margin-bottom: 4px; }
+.card .meta { font-size: .85rem; color: var(--ink-soft); }
+.tags { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+.tag { font-size: .75rem; background: var(--cream-2); color: var(--ink); padding: 1px 8px; border-radius: 999px; }
+.status { display: inline-block; font-size: .78rem; font-weight: 700; color: #fff; padding: 1px 9px; border-radius: 999px; }
+.status.open { background: var(--open); }
+.status.soon { background: var(--soon); }
+.status.closed { background: var(--closed); }
+.status.off { background: var(--off); }
 
-  .machine { display: flex; align-items: center; gap: 12px; }
-  .reel-window {
-    --h: 56px;
-    position: relative; flex: 1; height: calc(var(--h) * 3);
-    overflow: hidden; border-radius: 12px;
-    background: #fafafa; border: 2px solid var(--text);
-  }
-  .reel { will-change: transform; }
-  .reel-item {
-    height: var(--h); display: flex; align-items: center; justify-content: center;
-    padding: 0 14px; font-size: 18px; font-weight: 600;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .reel-window::before, .reel-window::after {
-    content: ""; position: absolute; left: 0; right: 0; height: var(--h); z-index: 2; pointer-events: none;
-  }
-  .reel-window::before { top: 0; background: linear-gradient(#fafafa, rgba(250,250,250,.55)); }
-  .reel-window::after { bottom: 0; background: linear-gradient(rgba(250,250,250,.55), #fafafa); }
-  .reel-mark {
-    position: absolute; left: 0; right: 0; top: var(--h); height: var(--h); z-index: 1;
-    border-top: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
-    background: var(--accent-soft); pointer-events: none;
-  }
-  .reel { position: relative; z-index: 1; }
+/* ===== 結果卡 / 詳細資料 ===== */
+.overlay {
+  position: fixed; inset: 0; z-index: 50; background: rgba(10,4,2,.75);
+  display: none; align-items: center; justify-content: center; padding: 16px;
+}
+.overlay.show { display: flex; }
+.result {
+  position: relative; background: var(--cream); color: var(--ink);
+  width: 100%; max-width: 440px; max-height: calc(100vh - 32px); overflow-y: auto;
+  border-radius: 22px; border: 5px solid var(--gold);
+  box-shadow: 0 0 0 3px var(--gold-dark), 0 20px 60px rgba(0,0,0,.7);
+  animation: pop .35s cubic-bezier(.2,1.4,.5,1);
+}
+@keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.result .ribbon {
+  background: var(--red); color: var(--gold-light); text-align: center; font-weight: 900;
+  letter-spacing: .2em; padding: 8px; font-size: 1.05rem;
+}
+.result .hero { height: 180px; width: 100%; border-radius: 0; font-size: 5rem; }
+.result .body { padding: 16px 20px 20px; }
+.result h2 { font-size: 1.5rem; font-weight: 900; line-height: 1.3; margin-bottom: 6px; }
+.result dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 12px 0; font-size: .95rem; }
+.result dt { color: var(--ink-soft); white-space: nowrap; }
+.result dd { min-width: 0; }
+.result .note { background: var(--cream-2); border-radius: 10px; padding: 8px 12px; font-size: .9rem; margin-bottom: 12px; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.actions a, .actions button {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 12px; border-radius: 12px; font-weight: 700; font-size: 1rem; text-decoration: none; border: none;
+}
+.btn-call { background: var(--open); color: #fff; }
+.btn-map { background: #1f6fd1; color: #fff; }
+.btn-again { grid-column: 1 / -1; background: linear-gradient(180deg, var(--gold-light), var(--gold)); color: var(--ink); }
+.close-x {
+  position: absolute; top: 6px; right: 8px; z-index: 2; width: 34px; height: 34px; border-radius: 50%;
+  border: none; background: rgba(0,0,0,.35); color: #fff; font-size: 1.1rem;
+}
 
-  .lever { width: 34px; height: 168px; position: relative; border: 0; background: none; padding: 0; flex: none; }
-  .lever .stick {
-    position: absolute; left: 14px; top: 22px; width: 6px; height: 120px;
-    background: #9ca3af; border-radius: 3px; transform-origin: bottom center; transition: transform .25s;
-  }
-  .lever .ball {
-    position: absolute; left: 3px; top: 0; width: 28px; height: 28px; border-radius: 50%;
-    background: var(--accent); box-shadow: inset -3px -3px 0 rgba(0,0,0,.15); transition: transform .25s;
-  }
-  .lever .base { position: absolute; left: 7px; bottom: 14px; width: 20px; height: 20px; border-radius: 6px; background: var(--text); }
-  .lever.pulled .stick { transform: scaleY(-.2); }
-  .lever.pulled .ball { transform: translateY(118px); }
+footer { text-align: center; font-size: .8rem; opacity: .5; padding: 0 16px 24px; }
 
-  .spin-btn { width: 100%; margin-top: 14px; font-size: 17px; min-height: 52px; }
-
-  /* ---------- 結果卡 ---------- */
-  .result { border: 2px solid var(--accent); animation: pop .35s ease-out; }
-  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
-  .result-name { font-size: 22px; font-weight: 700; margin: 0; }
-  .meta { color: var(--muted); font-size: 13px; margin-top: 2px; }
-  .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .tag { font-size: 12px; background: #f3f4f6; border-radius: 6px; padding: 2px 8px; }
-  .price { color: var(--accent); font-weight: 700; letter-spacing: 1px; }
-  .info-list { margin: 12px 0 0; padding: 0; list-style: none; }
-  .info-list li { display: flex; gap: 10px; padding: 7px 0; border-top: 1px dashed var(--line); font-size: 14px; }
-  .info-list li span:first-child { color: var(--muted); width: 64px; flex: none; }
-  .status-open { color: var(--good); font-weight: 600; }
-  .status-closed { color: var(--bad); font-weight: 600; }
-  .closing-warn {
-    margin-top: 10px; background: #fffbeb; color: #92400e; border: 1px solid #fde68a;
-    border-radius: 8px; padding: 8px 10px; font-size: 13px; font-weight: 600;
-  }
-  .result .btn-row { margin-top: 14px; }
-
-  /* ---------- 清單（紀錄、管理） ---------- */
-  .list { list-style: none; margin: 0; padding: 0; }
-  .list li { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid var(--line); }
-  .list li:first-child { border-top: 0; }
-  .list .main { flex: 1; min-width: 0; }
-  .list .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .list .sub { font-size: 12px; color: var(--muted); }
-  .icon-btn {
-    border: 0; background: none; width: 38px; height: 38px; border-radius: 10px;
-    font-size: 18px; display: grid; place-items: center; flex: none;
-  }
-  .icon-btn:hover { background: #f3f4f6; }
-  .icon-btn.fav-on { color: #eab308; }
-  .icon-btn.pause-on { color: var(--bad); }
-  .paused .title { color: var(--muted); text-decoration: line-through; }
-  .empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: 14px; }
-  .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
-  .toolbar > * { flex: 1; }
-
-  /* ---------- 對話框 ---------- */
-  .modal-bg {
-    position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.4);
-    display: none; align-items: flex-end; justify-content: center;
-  }
-  .modal-bg.open { display: flex; }
-  .modal {
-    background: #fff; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
-    border-radius: 18px 18px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
-  }
-  @media (min-width: 600px) {
-    .modal-bg { align-items: center; }
-    .modal { border-radius: 18px; }
-  }
-  .modal h3 { margin: 0 0 6px; font-size: 18px; }
-  .field { margin-top: 12px; }
-  .field > label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .hours-grid { display: grid; grid-template-columns: 34px 1fr; gap: 6px 8px; align-items: center; }
-  .hours-grid span { font-size: 14px; font-weight: 600; text-align: center; }
-  .hours-grid input { min-height: 38px; padding: 6px 10px; font-size: 14px; }
-
-  .autofill { background: #f9fafb; border: 1px dashed #d1d5db; border-radius: 12px; padding: 12px; margin-top: 10px; }
-  .autofill .btn { width: 100%; }
-  .autofill .hint { margin-top: 8px; }
-  .autofill.busy .btn { opacity: .5; pointer-events: none; }
-  .toast {
-    position: fixed; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); z-index: 60;
-    transform: translateX(-50%) translateY(20px); opacity: 0; transition: .25s;
-    background: var(--text); color: #fff; border-radius: 999px; padding: 9px 18px; font-size: 14px;
-    pointer-events: none; max-width: calc(100% - 32px); text-align: center;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .loading { text-align: center; color: var(--muted); padding: 40px 0; }
+@media (max-width: 480px) {
+  .window { --item-h: 72px; }
+  .reel-item { padding: 0 18px; }
+  .reel-item .thumb { width: 48px; height: 48px; font-size: 1.7rem; }
+  .reel-item .name { font-size: 1.02rem; }
+  .lever { width: 36px; }
+  .machine { padding: 18px 12px 14px; }
+  .result .hero { height: 110px; font-size: 3.6rem; }
+  .result .body { padding: 14px 16px 16px; }
+}
 </style>
 </head>
 <body>
 
-<header class="top">
-  <div class="top-inner">
-    <div class="brand">🍽️ 今天吃<span>什麼</span></div>
-    <div class="user-box" id="userBox"></div>
+<header>
+  <div class="brand">
+    <h1>🎰 今天吃什麼？</h1>
+    <div class="clock" id="clock"></div>
   </div>
+  <button class="icon-btn" id="muteBtn" aria-label="切換音效" title="切換音效">🔊</button>
 </header>
 
 <main>
-  <!-- ============ 抽選頁 ============ -->
-  <section class="page active" id="page-draw">
-    <div class="banner" id="demoBanner" hidden></div>
-
-    <div class="card">
-      <div class="label">縣市</div>
-      <select id="citySelect"></select>
-      <div class="label">區域（可複選）</div>
-      <div class="chips" id="districtChips"></div>
+  <section class="left">
+    <!-- 篩選區 -->
+    <div class="filters">
+      <div class="filter-row">
+        <div class="label">類型（可複選，不選＝不限）</div>
+        <div class="chips" id="catChips"></div>
+      </div>
+      <div class="filter-row">
+        <div class="label">價位（可複選，不選＝不限）</div>
+        <div class="chips" id="priceChips"></div>
+      </div>
+      <div class="filter-foot">
+        <label class="toggle">
+          <input type="checkbox" id="openOnly" checked>
+          <span class="track"></span>
+          <span>只抽營業中</span>
+        </label>
+        <span class="count">符合條件：<b id="matchCount">0</b> 間</span>
+        <button class="reset" id="resetBtn">重設篩選</button>
+      </div>
     </div>
 
-    <div class="card">
-      <div class="switch-row">
-        <span>只看現在營業中</span>
-        <label class="switch"><input type="checkbox" id="openNowToggle" checked><span class="slider"></span></label>
-      </div>
-      <div class="label">類型（不選＝全部）</div>
-      <div class="chips" id="tagChips"></div>
-      <div class="label">價位（不選＝全部）</div>
-      <div class="chips" id="priceChips"></div>
-    </div>
-
-    <div class="card">
-      <div class="count-line">
-        <span>符合條件</span>
-        <span><b id="candCount">0</b> 家</span>
-      </div>
-      <div class="machine">
-        <div class="reel-window">
-          <div class="reel-mark"></div>
-          <div class="reel" id="reel"></div>
+    <!-- 拉霸機 -->
+    <div class="machine-wrap">
+      <div class="machine" id="machine">
+        <div class="bulbs" id="bulbs"></div>
+        <div class="marquee">JACKPOT</div>
+        <div class="window" id="window">
+          <div class="strip" id="strip"></div>
+          <div class="payline"></div>
         </div>
-        <button class="lever" id="lever" data-action="spin" aria-label="拉下拉桿">
-          <div class="stick"></div><div class="ball"></div><div class="base"></div>
-        </button>
+        <button class="spin-btn" id="spinBtn">開始抽！</button>
+        <div class="hint" id="hint"></div>
       </div>
-      <button class="btn primary spin-btn" id="spinBtn" data-action="spin">拉一下！</button>
-      <div class="excluded-line" id="excludedLine"></div>
-    </div>
-
-    <div id="resultBox"></div>
-  </section>
-
-  <!-- ============ 吃過紀錄頁 ============ -->
-  <section class="page" id="page-history">
-    <div class="card">
-      <h2>不重複設定</h2>
-      <div class="switch-row">
-        <span><input type="number" id="noRepeatDays" min="0" max="30" style="width:72px;display:inline-block;min-height:38px;padding:6px 8px"> 天內吃過的店不會被抽到</span>
-      </div>
-      <div class="hint">設成 0 代表不限制。</div>
-    </div>
-    <div class="card">
-      <h2>最近吃過</h2>
-      <div class="hint" id="historyHint" style="margin:-6px 0 6px"></div>
-      <ul class="list" id="historyList"></ul>
+      <button class="lever" id="lever" aria-label="拉下拉桿開始抽">
+        <span class="base"></span>
+        <span class="arm"><span class="ball"></span></span>
+      </button>
     </div>
   </section>
 
-  <!-- ============ 管理餐廳頁 ============ -->
-  <section class="page" id="page-manage">
-    <div class="banner" id="manageBanner" hidden></div>
-    <div class="card">
-      <div class="btn-row">
-        <button class="btn primary" data-action="add">＋ 新增餐廳</button>
-      </div>
-      <div class="btn-row" style="margin-top:8px">
-        <button class="btn" data-action="import">匯入 JSON</button>
-        <button class="btn" data-action="export">匯出 JSON</button>
-      </div>
-      <input type="file" id="importFile" accept=".json,application/json" hidden>
+  <!-- 餐廳清單 -->
+  <section>
+    <div class="list-head">
+      <h2 class="panel-title">📋 餐廳清單</h2>
+      <small id="listInfo"></small>
     </div>
-    <div class="card">
-      <div class="toolbar">
-        <input type="search" id="manageSearch" placeholder="搜尋店名">
-        <select id="manageCity"></select>
-      </div>
-      <ul class="list" id="manageList"></ul>
-    </div>
-    <div class="card">
-      <h2>類型標籤</h2>
-      <div class="chips" id="tagManage"></div>
-      <div class="toolbar" style="margin-top:10px">
-        <input type="text" id="newTagInput" placeholder="新增標籤，例如：拉麵">
-        <button class="btn" data-action="add-tag" style="flex:none">新增</button>
-      </div>
-    </div>
+    <div class="grid" id="list"></div>
   </section>
 </main>
 
-<nav class="bottom">
-  <div class="nav-inner">
-    <button class="nav-btn active" data-page="draw"><span class="ico">🎰</span>抽選</button>
-    <button class="nav-btn" data-page="history"><span class="ico">🕘</span>吃過紀錄</button>
-    <button class="nav-btn" data-page="manage"><span class="ico">📋</span>管理餐廳</button>
-  </div>
-</nav>
+<footer>點餐廳卡片可以看詳細資料｜營業時間依 Google 資料整理，國定假日可能不同</footer>
 
-<!-- 編輯餐廳對話框 -->
-<div class="modal-bg" id="editModal">
-  <form class="modal" id="editForm" autocomplete="off">
-    <h3 id="editTitle">新增餐廳</h3>
-    <div class="autofill">
-      <label class="btn" for="shotInput">📷 上傳 Google Map 截圖，自動填入</label>
-      <input type="file" id="shotInput" accept="image/*" multiple hidden>
-      <div class="hint" id="autofillStatus">可一次選多張，例如店家資訊一張、展開後的一週營業時間一張。辨識完請檢查再儲存。</div>
-    </div>
-    <div class="field"><label>店名 *</label><input type="text" name="name" required></div>
-    <div class="field"><label>地址（填完會自動判斷縣市與區）</label><input type="text" name="address"></div>
-    <div class="field two">
-      <div><label>縣市</label><input type="text" name="city" placeholder="高雄市"></div>
-      <div><label>區</label><input type="text" name="district" placeholder="楠梓區"></div>
-    </div>
-    <div class="field"><label>價位</label><div class="chips" id="formPrice"></div></div>
-    <div class="field"><label>電話</label><input type="tel" name="phone"></div>
-    <div class="field"><label>Google Map 連結</label><input type="url" name="mapUrl" placeholder="https://maps.app.goo.gl/..."></div>
-    <div class="field"><label>推薦餐點（一行一道，或用逗號分隔）</label><textarea name="dishes"></textarea></div>
-    <div class="field"><label>類型標籤（可複選）</label><div class="chips" id="formTags"></div></div>
-    <div class="field">
-      <label>營業時間（例：11:00-14:00, 17:00-21:00；空白＝公休；七天都空白＝未知）</label>
-      <div class="hours-grid" id="formHours"></div>
-    </div>
-    <div class="btn-row" style="margin-top:18px">
-      <button type="button" class="btn" data-action="close-modal">取消</button>
-      <button type="submit" class="btn primary">儲存</button>
-    </div>
-  </form>
+<!-- 結果卡 -->
+<div class="overlay" id="overlay">
+  <div class="result" id="result" role="dialog" aria-modal="true"></div>
 </div>
 
-<div class="toast" id="toast"></div>
-
-<script type="module">
-/* =========================================================
-   1. Firebase 設定
-   把 Firebase 主控台給你的 firebaseConfig 貼在這裡。
-   apiKey 留空時，網頁會以「示範模式」運作（不能登入、不會儲存）。
-   ========================================================= */
-const firebaseConfig = {
-  apiKey: "AIzaSyAA2jSODUDj_e5UUNdNGeR9vgb_EMml7yA",
-  authDomain: "what-to-eat-5a1aa.firebaseapp.com",
-  projectId: "what-to-eat-5a1aa",
-  storageBucket: "what-to-eat-5a1aa.firebasestorage.app",
-  messagingSenderId: "145169467169",
-  appId: "1:145169467169:web:b42e15712af68b7b4f6060"
-};
-const FIREBASE_VERSION = "12.19.0";
-
-/* 唯一能登入管理餐廳的帳號（Firestore 安全規則也要填同一個） */
-const OWNER_EMAIL = "yan830904@nkust.edu.tw";
-
-/* =========================================================
-   2. 常數與示範資料
-   ========================================================= */
-const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-const DAY_NAMES = { mon: "一", tue: "二", wed: "三", thu: "四", fri: "五", sat: "六", sun: "日" };
-const FORM_DAY_ORDER = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
-const PRICES = ["$", "$$", "$$$"];
-const PRICE_TEXT = { "$": "$ 便宜", "$$": "$$ 中等", "$$$": "$$$ 較貴" };
-const DEFAULT_TAGS = ["中式", "台式小吃", "日式", "韓式", "東南亞", "美式/西式", "火鍋", "燒烤", "早午餐", "素食", "甜點飲料"];
-const DEFAULT_SETTINGS = { tags: DEFAULT_TAGS, noRepeatDays: 3, lastCity: "", lastDistricts: [] };
-const FAV_WEIGHT = 2;          // 最愛的店被抽中的權重
-const CLOSING_SOON_MIN = 30;   // 幾分鐘內打烊要提醒
-
-const lunch = [["11:00", "14:00"], ["17:00", "20:30"]];
-const DEMO_RESTAURANTS = [
-  { id: "demo01", name: "楠梓老街牛肉麵", address: "高雄市楠梓區示範路1號", price: "$", phone: "07-000-0001", dishes: ["紅燒牛肉麵", "滷味拼盤"], tags: ["中式"], hours: { mon: lunch, tue: lunch, wed: lunch, thu: lunch, fri: lunch, sat: lunch, sun: [] } },
-  { id: "demo02", name: "小森日式定食", address: "高雄市楠梓區示範路2號", price: "$$", phone: "07-000-0002", dishes: ["鹽烤鯖魚定食", "炸豬排定食"], tags: ["日式"], favorite: true, hours: { mon: [], tue: [["11:30", "14:30"], ["17:30", "21:00"]], wed: [["11:30", "14:30"], ["17:30", "21:00"]], thu: [["11:30", "14:30"], ["17:30", "21:00"]], fri: [["11:30", "14:30"], ["17:30", "21:00"]], sat: [["11:30", "21:00"]], sun: [["11:30", "21:00"]] } },
-  { id: "demo03", name: "阿嬤的便當店", address: "高雄市楠梓區示範路3號", price: "$", phone: "07-000-0003", dishes: ["排骨便當", "控肉便當"], tags: ["台式小吃"], hours: { mon: [["10:30", "19:30"]], tue: [["10:30", "19:30"]], wed: [["10:30", "19:30"]], thu: [["10:30", "19:30"]], fri: [["10:30", "19:30"]], sat: [], sun: [] } },
-  { id: "demo04", name: "首爾小廚", address: "高雄市楠梓區示範路4號", price: "$$", phone: "07-000-0004", dishes: ["石鍋拌飯", "部隊鍋"], tags: ["韓式", "火鍋"], hours: everyDay([["11:00", "21:00"]]) },
-  { id: "demo05", name: "晨光早午餐", address: "高雄市楠梓區示範路5號", price: "$", phone: "07-000-0005", dishes: ["蛋餅", "總匯三明治"], tags: ["早午餐"], hours: everyDay([["07:00", "14:00"]]) },
-  { id: "demo06", name: "南洋香料屋", address: "高雄市楠梓區示範路6號", price: "$$", phone: "07-000-0006", dishes: ["打拋豬飯", "綠咖哩雞"], tags: ["東南亞"], hours: everyDay([["11:00", "14:00"], ["17:00", "21:00"]]) },
-  { id: "demo07", name: "暖暖小火鍋", address: "高雄市左營區示範路7號", price: "$$", phone: "07-000-0007", dishes: ["麻辣鍋", "牛奶鍋"], tags: ["火鍋"], hours: everyDay([["11:30", "23:00"]]) },
-  { id: "demo08", name: "綠野蔬食", address: "高雄市左營區示範路8號", price: "$$", phone: "07-000-0008", dishes: ["蔬食咖哩", "鮮蔬焗烤"], tags: ["素食", "美式/西式"], hours: everyDay([["11:00", "14:00"], ["17:00", "20:00"]]) },
-  { id: "demo09", name: "港都燒肉", address: "高雄市鼓山區示範路9號", price: "$$$", phone: "07-000-0009", dishes: ["和牛拼盤", "厚切牛舌"], tags: ["燒烤", "日式"], hours: everyDay([["17:00", "00:30"]]) },
-  { id: "demo10", name: "府城甜湯", address: "台南市中西區示範路10號", price: "$", phone: "06-000-0010", dishes: ["紅豆湯圓", "杏仁豆腐"], tags: ["甜點飲料"], hours: everyDay([["12:00", "22:00"]]) },
-  { id: "demo11", name: "老宅義大利麵", address: "台南市中西區示範路11號", price: "$$", phone: "06-000-0011", dishes: ["青醬蛤蜊麵", "提拉米蘇"], tags: ["美式/西式"], hours: everyDay([["11:30", "15:00"], ["17:30", "21:30"]]) }
+<script>
+// ===== 餐廳資料 =====
+// 新增餐廳：複製一整筆 { ... }，貼在最後一筆的後面，記得兩筆之間要有逗號。
+// categories 只能填：便當、麵食、小吃、火鍋、合菜熱炒、早午餐、異國料理、飲料甜點
+// hours：每天一個陣列，[] 代表公休；跨夜營業寫成 ["21:00", "01:00"] 即可
+// priceLevel：1 = 200元以下、2 = 200～400元、3 = 400～1000元、4 = 1000元以上
+// image：照片放在 images 資料夾，這裡只填檔名，例如 "duck.jpg"；沒有照片就留 ""
+const RESTAURANTS = [
+  {
+    name: "楠梓瀚鴨肉飯",
+    categories: ["便當", "小吃"],
+    hours: {
+      mon: [],
+      tue: [["11:00", "20:00"]],
+      wed: [["11:00", "20:00"]],
+      thu: [["11:00", "20:00"]],
+      fri: [["11:00", "20:00"]],
+      sat: [["11:00", "20:00"]],
+      sun: [["11:00", "20:00"]]
+    },
+    phone: "0933253332",
+    address: "811高雄市楠梓區翠屏里德祥路167號",
+    priceLevel: 1,
+    dishes: ["鴨肉便當", "鴨肉麵", "下水湯", "筍乾湯"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "鑫泰式料理館",
+    categories: ["異國料理"],
+    hours: {
+      mon: [],
+      tue: [["11:00", "15:00"], ["17:00", "21:00"]],
+      wed: [["11:00", "15:00"], ["17:00", "21:00"]],
+      thu: [["11:00", "15:00"], ["17:00", "21:00"]],
+      fri: [["11:00", "15:00"], ["17:00", "21:00"]],
+      sat: [["11:00", "15:00"], ["17:00", "21:00"]],
+      sun: [["11:00", "15:00"], ["17:00", "21:00"]]
+    },
+    phone: "073637394",
+    address: "811高雄市楠梓區翠屏里德民路316號",
+    priceLevel: 2,
+    dishes: ["椒麻雞飯", "蝦醬空心菜", "月亮蝦餅", "泰式奶茶"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "丼食堂",
+    categories: ["便當"],
+    hours: {
+      mon: [["11:00", "23:00"]],
+      tue: [["11:00", "23:00"]],
+      wed: [["11:00", "23:00"]],
+      thu: [["11:00", "23:00"]],
+      fri: [["11:00", "23:00"]],
+      sat: [["11:00", "23:00"]],
+      sun: [["11:00", "23:00"]]
+    },
+    phone: "073650772",
+    address: "811高雄市楠梓區翠屏里德祥路166號",
+    priceLevel: 1,
+    dishes: ["春川炒雞丼", "厚切大阪燒豬排丼"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "異國飯bar",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["11:30", "14:00"], ["17:00", "21:00"]],
+      tue: [["11:30", "14:00"], ["17:00", "21:00"]],
+      wed: [["11:30", "14:00"], ["17:00", "21:00"]],
+      thu: [["11:30", "14:00"], ["17:00", "21:00"]],
+      fri: [["11:30", "14:00"], ["17:00", "21:00"]],
+      sat: [["11:30", "14:00"], ["17:00", "21:00"]],
+      sun: [["11:30", "14:00"], ["17:00", "21:00"]]
+    },
+    phone: "073011935",
+    address: "811高雄市楠梓區翠屏里德祥路185號",
+    priceLevel: 1,
+    dishes: ["明太子炒飯", "起司豬肉捲", "綠咖哩雞肉燴飯", "蛋花湯"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "嗑•滷味",
+    categories: ["小吃"],
+    hours: {
+      mon: [["16:00", "00:00"]],
+      tue: [["16:00", "00:00"]],
+      wed: [["16:00", "00:00"]],
+      thu: [["16:00", "00:00"]],
+      fri: [["16:00", "00:00"]],
+      sat: [],
+      sun: [["16:00", "00:00"]]
+    },
+    phone: "0970020068",
+    address: "811高雄市楠梓區翠屏里德祥路159號",
+    priceLevel: 1,
+    dishes: ["滷味"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "粥大福 高雄楠梓店",
+    categories: ["小吃"],
+    hours: {
+      mon: [["11:00", "22:00"]],
+      tue: [["11:00", "22:00"]],
+      wed: [["11:00", "22:00"]],
+      thu: [["11:00", "22:00"]],
+      fri: [["11:00", "22:00"]],
+      sat: [["11:00", "22:00"]],
+      sun: [["11:00", "22:00"]]
+    },
+    phone: "073643919",
+    address: "81154高雄市楠梓區翠屏里德賢路143-10號",
+    priceLevel: 1,
+    dishes: ["皮蛋瘦肉粥", "花菇燉雞粥", "滑蛋牛肉粥", "雞湯白粥"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "米湯匙德賢店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:00", "13:30"], ["16:30", "20:00"]],
+      tue: [["10:00", "13:30"], ["16:30", "20:00"]],
+      wed: [["10:00", "13:30"], ["16:30", "20:00"]],
+      thu: [["10:00", "13:30"], ["16:30", "20:00"]],
+      fri: [["10:00", "13:30"], ["16:30", "20:00"]],
+      sat: [["10:00", "13:30"], ["16:30", "20:00"]],
+      sun: [["10:00", "13:30"], ["16:30", "20:00"]]
+    },
+    phone: "073663086",
+    address: "811高雄市楠梓區翠屏里德賢路218號",
+    priceLevel: 1,
+    dishes: ["炒飯", "炒泡麵"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "大無敵烤肉飯-楠梓德賢店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "20:30"]],
+      tue: [["10:30", "20:30"]],
+      wed: [["10:30", "20:30"]],
+      thu: [["10:30", "20:30"]],
+      fri: [["10:30", "20:30"]],
+      sat: [["10:30", "20:30"]],
+      sun: [["10:30", "20:30"]]
+    },
+    phone: "073645656",
+    address: "811014高雄市楠梓區翠屏里德賢路181號",
+    priceLevel: 1,
+    dishes: ["烤肉便當", "秘製烤肉", "招牌烤雞腿便當", "烤雞排飯"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "得正-楠梓德賢計劃",
+    categories: ["飲料甜點"],
+    hours: {
+      mon: [["09:30", "21:30"]],
+      tue: [["09:30", "21:30"]],
+      wed: [["09:30", "21:30"]],
+      thu: [["09:30", "21:30"]],
+      fri: [["09:30", "21:30"]],
+      sat: [["09:30", "21:30"]],
+      sun: [["09:30", "21:30"]]
+    },
+    phone: "073650197",
+    address: "81154高雄市楠梓區翠屏里德賢路197號",
+    priceLevel: 1,
+    dishes: ["春烏龍", "焙烏龍奶茶", "檸檬春烏龍", "甘蔗春烏龍"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "八方雲集-高雄德賢店",
+    categories: ["麵食"],
+    hours: {
+      mon: [["11:00", "18:00"]],
+      tue: [["11:00", "18:00"]],
+      wed: [["11:00", "18:00"]],
+      thu: [["11:00", "18:00"]],
+      fri: [["11:00", "18:00"]],
+      sat: [["11:00", "18:00"]],
+      sun: [["11:00", "18:00"]]
+    },
+    phone: "073658496",
+    address: "811高雄市楠梓區翠屏里德賢路199號",
+    priceLevel: 1,
+    dishes: ["鍋貼", "水餃", "牛肉麵"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "今年貴𣛮楠梓德賢店",
+    categories: ["麵食", "小吃"],
+    hours: {
+      mon: [["06:00", "20:15"]],
+      tue: [],
+      wed: [["06:00", "20:15"]],
+      thu: [["06:00", "20:15"]],
+      fri: [["06:00", "20:15"]],
+      sat: [["06:00", "20:15"]],
+      sun: [["06:00", "20:15"]]
+    },
+    phone: "073657775",
+    address: "81154高雄市楠梓區翠屏里德賢路236號",
+    priceLevel: 1,
+    dishes: ["綜合麵線", "腸仔麵線"],
+    image: "",
+    note: "不接受訂位"
+  },
+  {
+    name: "馬西索友韓國料理",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["17:00", "20:30"]],
+      tue: [],
+      wed: [["17:00", "20:30"]],
+      thu: [["17:00", "20:30"]],
+      fri: [["17:00", "20:30"]],
+      sat: [["17:00", "20:30"]],
+      sun: [["17:00", "20:30"]]
+    },
+    phone: "073655590",
+    address: "811高雄市楠梓區翠屏里德賢路252號",
+    priceLevel: 1,
+    dishes: ["部隊鍋", "辣炒年糕", "牛肉拌飯", "豆腐鍋"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "味廚粥品麵食(德賢店)",
+    categories: ["小吃"],
+    hours: {
+      mon: [["09:30", "20:30"]],
+      tue: [["09:30", "20:30"]],
+      wed: [["09:30", "20:30"]],
+      thu: [["09:30", "20:30"]],
+      fri: [["09:30", "20:30"]],
+      sat: [["09:30", "20:30"]],
+      sun: [["09:30", "20:30"]]
+    },
+    phone: "073652028",
+    address: "811高雄市楠梓區翠屏里德民路356巷30號",
+    priceLevel: 1,
+    dishes: ["皮蛋瘦肉粥", "鹹蛋瘦肉粥", "雞蓉玉米粥", "香菇雞絲粥"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "南大門韓國料理",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["10:00", "20:30"]],
+      tue: [["10:00", "20:30"]],
+      wed: [["10:00", "20:30"]],
+      thu: [["10:00", "20:30"]],
+      fri: [["10:00", "20:30"]],
+      sat: [],
+      sun: [["10:00", "20:30"]]
+    },
+    phone: "073663965",
+    address: "811高雄市楠梓區翠屏里德賢路394號",
+    priceLevel: 1,
+    dishes: ["泡菜石鍋", "牛肉拌飯", "炸醬麵", "燒肉拌飯"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "梁社漢排骨-楠梓德惠店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "20:30"]],
+      tue: [["10:30", "20:30"]],
+      wed: [["10:30", "20:30"]],
+      thu: [["10:30", "20:30"]],
+      fri: [["10:30", "20:30"]],
+      sat: [["10:30", "20:30"]],
+      sun: [["10:30", "20:30"]]
+    },
+    phone: "073646712",
+    address: "811高雄市楠梓區翠屏里德惠路22號",
+    priceLevel: 1,
+    dishes: ["排骨飯", "炸雞腿飯", "椒鹽雞塊", "玫瑰醬油雞"],
+    image: "",
+    note: "不接受訂位"
+  },
+  {
+    name: "阿茶便當(德賢店)",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:00", "13:30"], ["16:00", "19:30"]],
+      tue: [["10:00", "13:30"], ["16:00", "19:30"]],
+      wed: [["10:00", "13:30"], ["16:00", "19:30"]],
+      thu: [["10:00", "13:30"], ["16:00", "19:30"]],
+      fri: [["10:00", "13:30"], ["16:00", "19:30"]],
+      sat: [["10:00", "13:30"]],
+      sun: []
+    },
+    phone: "073639313",
+    address: "811高雄市楠梓區翠屏里德賢路530巷13號",
+    priceLevel: 1,
+    dishes: ["傳統豬排飯"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "悟饕池上飯包-楠梓翠屏店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:30", "19:00"]],
+      tue: [["10:30", "14:00"], ["16:30", "19:00"]],
+      wed: [["10:30", "14:00"], ["16:30", "19:00"]],
+      thu: [["10:30", "14:00"], ["16:30", "19:00"]],
+      fri: [["10:30", "14:00"], ["16:30", "19:00"]],
+      sat: [["10:30", "14:00"], ["16:30", "19:00"]],
+      sun: [["10:30", "14:00"], ["16:30", "19:00"]]
+    },
+    phone: "079713710",
+    address: "811高雄市楠梓區翠屏里翠屏路10號",
+    priceLevel: 1,
+    dishes: ["海陸雙拼飯包", "台式焢肉飯包", "椒麻雞排", "池上飯包"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "京沐鍋燒麵 JIMU NABEYAKI",
+    categories: ["麵食"],
+    hours: {
+      mon: [["11:00", "14:00"], ["17:00", "21:00"]],
+      tue: [["11:00", "14:00"], ["17:00", "21:00"]],
+      wed: [["11:00", "14:00"], ["17:00", "21:00"]],
+      thu: [],
+      fri: [["11:00", "14:00"], ["17:00", "21:00"]],
+      sat: [["11:00", "14:00"], ["17:00", "21:00"]],
+      sun: [["11:00", "14:00"], ["17:00", "21:00"]]
+    },
+    phone: "0976003360",
+    address: "811高雄市楠梓區翠屏里惠民路18號",
+    priceLevel: 1,
+    dishes: ["鍋燒麵", "蛤蠣多多鍋燒", "肉多多鍋燒"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "奉旨嚐點",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["11:30", "15:00"], ["17:30", "21:00"]],
+      tue: [["11:30", "15:00"], ["17:30", "21:00"]],
+      wed: [["11:30", "15:00"], ["17:30", "21:00"]],
+      thu: [["11:30", "15:00"], ["17:30", "21:00"]],
+      fri: [["11:30", "15:00"], ["17:30", "21:00"]],
+      sat: [["11:30", "15:00"], ["17:30", "21:00"]],
+      sun: [["11:30", "15:00"], ["17:30", "21:00"]]
+    },
+    phone: "073640650",
+    address: "811高雄市楠梓區翠屏路7號",
+    priceLevel: 3,
+    dishes: ["葡式酥皮蛋塔", "流沙煎堆", "香煎蘿蔔糕", "脆皮蝦腸粉", "嚐點鮮蝦餃"],
+    image: "",
+    note: "港式點心，只收現金、需要預訂"
+  },
+  {
+    name: "有春大雞腿飯",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:00", "13:00"], ["16:00", "19:00"]],
+      tue: [["10:00", "13:00"], ["16:00", "19:00"]],
+      wed: [["10:00", "13:00"], ["16:00", "19:00"]],
+      thu: [["10:00", "13:00"], ["16:00", "19:00"]],
+      fri: [["10:00", "13:00"], ["16:00", "19:00"]],
+      sat: [["10:00", "13:00"], ["16:00", "19:00"]],
+      sun: [["10:00", "13:00"], ["16:00", "19:00"]]
+    },
+    phone: "",
+    address: "811高雄市楠梓區翠屏里惠民路35號",
+    priceLevel: 1,
+    dishes: ["大雞腿便當", "蒲燒鯛魚便當", "排骨飯", "大鯖魚便當"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "閎壽司",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["21:00", "01:00"]],
+      tue: [["21:00", "01:00"]],
+      wed: [["21:00", "01:00"]],
+      thu: [],
+      fri: [["21:00", "01:00"]],
+      sat: [["21:00", "01:00"]],
+      sun: [["21:00", "01:00"]]
+    },
+    phone: "0909448141",
+    address: "811高雄市楠梓區翠屏里惠民路88號B3區",
+    priceLevel: 4,
+    dishes: ["刺身", "壽司", "飛扁"],
+    image: "",
+    note: "宵夜刺身壽司，只收現金（IG：9月起週四固定公休）"
+  },
+  {
+    name: "元爵味黃燜雞米飯 高雄惠民店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "21:00"]],
+      tue: [["10:30", "21:00"]],
+      wed: [["10:30", "21:00"]],
+      thu: [["10:30", "21:00"]],
+      fri: [["10:30", "21:00"]],
+      sat: [["10:30", "21:00"]],
+      sun: [["10:30", "21:00"]]
+    },
+    phone: "073600560",
+    address: "811高雄市楠梓區仁昌里惠民路103號1樓",
+    priceLevel: 2,
+    dishes: ["黃燜雞米飯", "經典黃燜豬", "酸湯魚", "酒香花雕雞"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "壹號樹早午餐",
+    categories: ["早午餐"],
+    hours: {
+      mon: [["07:00", "20:00"]],
+      tue: [["07:00", "20:00"]],
+      wed: [["07:00", "20:00"]],
+      thu: [["07:00", "20:00"]],
+      fri: [["07:00", "20:00"]],
+      sat: [["07:00", "15:00"]],
+      sun: [["07:00", "15:00"]]
+    },
+    phone: "0903146591",
+    address: "811高雄市楠梓區仁昌里惠民路124號",
+    priceLevel: 1,
+    dishes: ["打拋烘蛋吐司", "培根蛋吐司", "燻雞烘蛋吐司", "熱狗蛋"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "滿溢食堂【右昌店】",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:30", "20:00"]],
+      tue: [["10:30", "14:00"], ["16:30", "20:00"]],
+      wed: [["10:30", "14:00"], ["16:30", "20:00"]],
+      thu: [],
+      fri: [],
+      sat: [["10:30", "14:00"], ["16:30", "20:00"]],
+      sun: [["10:30", "14:00"], ["16:30", "20:00"]]
+    },
+    phone: "073641887",
+    address: "811高雄市楠梓區興昌里右昌街575號",
+    priceLevel: 1,
+    dishes: ["蔥爆牛肉飯", "蔥爆豬肉飯", "打拋豬肉飯", "麻婆豆腐飯"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "八廚職人弁当 右昌軍校店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "20:00"]],
+      tue: [["10:30", "20:00"]],
+      wed: [["10:30", "20:00"]],
+      thu: [["10:30", "20:00"]],
+      fri: [["10:30", "20:00"]],
+      sat: [["10:30", "20:00"]],
+      sun: [["10:30", "20:00"]]
+    },
+    phone: "073646699",
+    address: "811高雄市楠梓區建昌里軍校路958號",
+    priceLevel: 1,
+    dishes: ["招牌燒肉弁当", "泡菜燒肉弁当", "打拋豬肉弁当"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "右昌肉圓",
+    categories: ["小吃"],
+    hours: {
+      mon: [["06:00", "18:00"]],
+      tue: [["06:00", "18:00"]],
+      wed: [["06:00", "18:00"]],
+      thu: [["06:00", "18:00"]],
+      fri: [["06:00", "18:00"]],
+      sat: [["06:00", "18:00"]],
+      sun: [["06:00", "18:00"]]
+    },
+    phone: "073630361",
+    address: "811高雄市楠梓區興昌里右昌街261號",
+    priceLevel: 1,
+    dishes: ["清蒸肉圓", "四神湯"],
+    image: "",
+    note: "每日限量，常排隊"
+  },
+  {
+    name: "毛伯伯牛肉麵 楠梓店",
+    categories: ["麵食"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:30", "20:00"]],
+      tue: [["10:30", "14:00"], ["16:30", "20:00"]],
+      wed: [["10:30", "14:00"], ["16:30", "20:00"]],
+      thu: [["10:30", "14:00"], ["16:30", "20:00"]],
+      fri: [["10:30", "14:00"], ["16:30", "20:00"]],
+      sat: [["10:30", "14:00"], ["16:30", "20:00"]],
+      sun: [["10:30", "14:00"], ["16:30", "20:00"]]
+    },
+    phone: "073617764",
+    address: "811高雄市楠梓區隆昌里軍校路880巷31弄41號",
+    priceLevel: 1,
+    dishes: ["牛肉麵", "番茄牛肉飯", "炸醬麵", "辣味小魚乾"],
+    image: "",
+    note: "不接受訂位、狗狗友善"
+  },
+  {
+    name: "維克美食坊-墨西哥捲餅",
+    categories: ["異國料理"],
+    hours: {
+      mon: [],
+      tue: [["10:30", "13:00"], ["17:00", "19:00"]],
+      wed: [["10:30", "13:00"], ["17:00", "19:00"]],
+      thu: [["10:30", "13:00"]],
+      fri: [["10:30", "13:00"], ["17:00", "19:00"]],
+      sat: [["10:30", "13:00"]],
+      sun: []
+    },
+    phone: "073661800",
+    address: "811高雄市楠梓區隆昌里後昌路801號",
+    priceLevel: 1,
+    dishes: ["咖哩羊肉捲餅", "雞肉捲餅", "牛肉捲餅", "印度烤餅"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "蛋白盒子 健康低卡餐盒 楠梓後昌店",
+    categories: ["便當"],
+    hours: {
+      mon: [["11:00", "14:00"], ["16:00", "19:30"]],
+      tue: [["11:00", "14:00"], ["16:00", "19:30"]],
+      wed: [["11:00", "14:00"], ["16:00", "19:30"]],
+      thu: [["11:00", "14:00"], ["16:00", "19:30"]],
+      fri: [["11:00", "14:00"], ["16:00", "19:30"]],
+      sat: [["11:00", "14:00"], ["16:00", "19:30"]],
+      sun: [["11:00", "14:00"], ["16:00", "19:30"]]
+    },
+    phone: "073600081",
+    address: "811高雄市楠梓區後昌路839號",
+    priceLevel: 1,
+    dishes: ["鹽烤鯖魚餐盒", "黑胡椒雞胸餐盒", "舒肥雞胸餐盒"],
+    image: "",
+    note: "健康餐盒"
+  },
+  {
+    name: "樂炒飯",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:40", "20:00"]],
+      tue: [["10:30", "14:00"], ["16:40", "20:00"]],
+      wed: [["10:30", "14:00"], ["16:40", "20:00"]],
+      thu: [["10:30", "14:00"], ["16:40", "20:00"]],
+      fri: [["10:30", "14:00"], ["16:40", "20:00"]],
+      sat: [["10:30", "14:00"], ["16:40", "20:00"]],
+      sun: [["10:30", "14:00"], ["16:40", "20:00"]]
+    },
+    phone: "0966809453",
+    address: "811高雄市楠梓區秀昌里秀昌街2號",
+    priceLevel: 1,
+    dishes: ["牛肉炒飯", "蝦仁炒飯", "鍋燒意麵"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "勁請享用健康廚房-楠梓後昌店",
+    categories: ["便當"],
+    hours: {
+      mon: [["11:00", "19:30"]],
+      tue: [["11:00", "19:30"]],
+      wed: [["11:00", "19:30"]],
+      thu: [["11:00", "19:30"]],
+      fri: [],
+      sat: [],
+      sun: []
+    },
+    phone: "073625557",
+    address: "811高雄市楠梓區隆昌里後昌路923號",
+    priceLevel: 1,
+    dishes: ["祖傳雞腿餐盒", "泰式打拋豬餐盒", "舒肥雞胸餐盒", "鮮烤鯖魚餐盒"],
+    image: "",
+    note: "健康餐盒，不接受訂位"
+  },
+  {
+    name: "貓太郎大阪燒屋",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["10:30", "13:30"], ["16:00", "20:00"]],
+      tue: [["10:30", "13:30"], ["16:00", "20:00"]],
+      wed: [["10:30", "13:30"], ["16:00", "20:00"]],
+      thu: [["10:30", "13:30"], ["16:00", "20:00"]],
+      fri: [["10:30", "13:30"], ["16:00", "20:00"]],
+      sat: [["10:30", "13:30"], ["16:00", "20:00"]],
+      sun: [["10:30", "13:30"], ["16:00", "20:00"]]
+    },
+    phone: "0926037957",
+    address: "811高雄市楠梓區秀昌里加昌路725號",
+    priceLevel: 1,
+    dishes: ["招牌大阪燒", "大阪燒蝦炒麵"],
+    image: "",
+    note: "只收現金、狗狗友善"
+  },
+  {
+    name: "鶴味道",
+    categories: ["便當", "小吃"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:00", "20:00"]],
+      tue: [["10:30", "14:00"], ["16:00", "20:00"]],
+      wed: [["10:30", "14:00"], ["16:00", "20:00"]],
+      thu: [["10:30", "14:00"], ["16:00", "20:00"]],
+      fri: [["10:30", "14:00"], ["16:00", "20:00"]],
+      sat: [["10:30", "14:00"], ["16:00", "20:00"]],
+      sun: [["10:30", "14:00"], ["16:00", "20:00"]]
+    },
+    phone: "075917766",
+    address: "811高雄市楠梓區加昌里樂群路67號",
+    priceLevel: 1,
+    dishes: ["炭燒肉燥飯", "肉羹米粉"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "鏈哥食堂",
+    categories: ["便當"],
+    hours: {
+      mon: [["11:00", "14:00"], ["16:30", "20:00"]],
+      tue: [],
+      wed: [],
+      thu: [["11:00", "14:00"], ["16:30", "20:00"]],
+      fri: [["11:00", "14:00"], ["16:30", "20:00"]],
+      sat: [["11:00", "14:00"], ["16:30", "20:00"]],
+      sun: [["11:00", "14:00"], ["16:30", "20:00"]]
+    },
+    phone: "073657355",
+    address: "811高雄市楠梓區加宏路198號",
+    priceLevel: 2,
+    dishes: ["招牌四十年三寶飯", "鏈嫂紅燒獅子頭", "燉紅酒豬", "獅子頭套餐"],
+    image: "",
+    note: "只收現金、需要預訂"
+  },
+  {
+    name: "佳味燒肉飯(後昌店)",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:00", "20:00"]],
+      tue: [["10:00", "20:00"]],
+      wed: [["10:00", "20:00"]],
+      thu: [["10:00", "20:00"]],
+      fri: [["10:00", "20:00"]],
+      sat: [["10:00", "20:00"]],
+      sun: [["10:00", "20:00"]]
+    },
+    phone: "073601058",
+    address: "811高雄市楠梓區宏昌里後昌新路16號",
+    priceLevel: 1,
+    dishes: ["炸排骨便當", "燒肉飯便當", "炸排骨套餐"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "山東一品",
+    categories: ["麵食"],
+    hours: {
+      mon: [["11:00", "14:00"], ["17:00", "20:00"]],
+      tue: [["11:00", "14:00"], ["17:00", "20:00"]],
+      wed: [["11:00", "14:00"], ["17:00", "20:00"]],
+      thu: [["11:00", "14:00"], ["17:00", "20:00"]],
+      fri: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sat: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sun: [["11:00", "14:00"], ["17:00", "20:00"]]
+    },
+    phone: "073661079",
+    address: "811高雄市楠梓區宏昌里後昌新路52號",
+    priceLevel: 1,
+    dishes: ["手工水餃", "紫菜湯", "虱目魚丸湯", "蛤仔湯"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "旺芳烤肉飯後昌店",
+    categories: ["便當"],
+    hours: {
+      mon: [["11:00", "14:30"], ["16:30", "22:00"]],
+      tue: [["11:00", "14:30"], ["16:30", "22:00"]],
+      wed: [["11:00", "14:30"], ["16:30", "22:00"]],
+      thu: [["11:00", "14:30"], ["16:30", "22:00"]],
+      fri: [["11:00", "14:30"], ["16:30", "22:00"]],
+      sat: [["11:00", "14:30"], ["16:30", "22:00"]],
+      sun: [["11:00", "14:30"], ["16:30", "22:00"]]
+    },
+    phone: "0910094934",
+    address: "811高雄市楠梓區宏昌里後昌新路69號",
+    priceLevel: 1,
+    dishes: ["烤肉飯", "燒豚梅花", "美國雪花牛", "清燉牛肋條湯"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "銘記台灣小吃楠梓朝明店",
+    categories: ["小吃"],
+    hours: {
+      mon: [["09:00", "23:00"]],
+      tue: [["09:00", "23:00"]],
+      wed: [["09:00", "23:00"]],
+      thu: [["09:00", "23:00"]],
+      fri: [["09:00", "23:00"]],
+      sat: [["09:00", "23:00"]],
+      sun: [["09:00", "23:00"]]
+    },
+    phone: "073520279",
+    address: "811高雄市楠梓區中陽里楠都西巷127號",
+    priceLevel: 1,
+    dishes: ["筒仔米糕", "肉燥飯", "排骨酥湯", "燙青菜"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "富川號",
+    categories: ["麵食"],
+    hours: {
+      mon: [],
+      tue: [],
+      wed: [["11:00", "20:00"]],
+      thu: [["11:00", "20:00"]],
+      fri: [["11:00", "20:00"]],
+      sat: [["11:00", "20:00"]],
+      sun: [["11:00", "20:00"]]
+    },
+    phone: "073539797",
+    address: "811高雄市楠梓區中陽里楠梓新路190巷50號",
+    priceLevel: 1,
+    dishes: ["手打麵", "蕎麥麵", "綠茶麵"],
+    image: "",
+    note: "自製麵條"
+  },
+  {
+    name: "港都金口福小龍湯包專賣店",
+    categories: ["小吃"],
+    hours: {
+      mon: [],
+      tue: [["04:30", "13:30"]],
+      wed: [["04:30", "13:30"]],
+      thu: [["04:30", "13:30"]],
+      fri: [["04:30", "13:30"]],
+      sat: [["04:30", "14:30"]],
+      sun: [["04:30", "14:30"]]
+    },
+    phone: "073540668",
+    address: "811高雄市楠梓區惠楠里建楠路52號",
+    priceLevel: 1,
+    dishes: ["小籠湯包", "酸辣湯"],
+    image: "",
+    note: "清晨就開，適合早餐"
+  },
+  {
+    name: "梅家村排骨飯 (楠梓店)",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:00", "20:00"]],
+      tue: [["10:00", "20:00"]],
+      wed: [["10:00", "20:00"]],
+      thu: [["10:00", "20:00"]],
+      fri: [["10:00", "20:00"]],
+      sat: [["10:00", "20:00"]],
+      sun: [["10:00", "20:00"]]
+    },
+    phone: "073525222",
+    address: "811高雄市楠梓區中陽里建楠路39號",
+    priceLevel: 1,
+    dishes: ["排骨飯", "雞腿飯", "燒肉飯"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "泰炒撈食(楠梓德民店)",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["09:30", "14:00"], ["16:00", "21:30"]],
+      tue: [["09:30", "14:00"], ["16:00", "21:30"]],
+      wed: [["09:30", "14:00"], ["16:00", "21:30"]],
+      thu: [["09:30", "14:00"], ["16:00", "21:30"]],
+      fri: [["09:30", "14:00"], ["16:00", "21:30"]],
+      sat: [["09:30", "14:00"], ["16:00", "21:30"]],
+      sun: [["09:30", "14:00"], ["16:00", "21:30"]]
+    },
+    phone: "073655215",
+    address: "811高雄市楠梓區加昌里德民路645號",
+    priceLevel: 1,
+    dishes: ["椒麻雞雙蛋炒飯", "泰式炒泡麵", "打拋豬飯"],
+    image: "",
+    note: "平價泰式炒飯"
+  },
+  {
+    name: "右昌黃家香辣滷味",
+    categories: ["小吃"],
+    hours: {
+      mon: [["16:00", "23:00"]],
+      tue: [["16:00", "23:00"]],
+      wed: [["16:00", "23:00"]],
+      thu: [["16:00", "23:00"]],
+      fri: [["16:00", "23:00"]],
+      sat: [["16:00", "23:00"]],
+      sun: []
+    },
+    phone: "073638918",
+    address: "811高雄市楠梓區福昌里三山街47-1號",
+    priceLevel: 1,
+    dishes: ["香辣滷味"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "林記大腸蚵仔麵線",
+    categories: ["小吃"],
+    hours: {
+      mon: [["06:00", "12:00"]],
+      tue: [["06:00", "12:00"]],
+      wed: [["06:00", "12:00"]],
+      thu: [["06:00", "12:00"]],
+      fri: [["06:00", "12:00"]],
+      sat: [["06:00", "12:00"]],
+      sun: []
+    },
+    phone: "0922226072",
+    address: "811高雄市楠梓區建昌里右昌街260號",
+    priceLevel: 1,
+    dishes: ["大腸蚵仔麵線"],
+    image: "",
+    note: "只收現金、不接受訂位"
+  },
+  {
+    name: "三媽臭臭鍋 右昌店",
+    categories: ["火鍋"],
+    hours: {
+      mon: [["10:30", "22:30"]],
+      tue: [["10:30", "22:30"]],
+      wed: [["10:30", "22:30"]],
+      thu: [["10:30", "22:30"]],
+      fri: [["10:30", "22:30"]],
+      sat: [],
+      sun: [["10:30", "22:30"]]
+    },
+    phone: "073630631",
+    address: "811高雄市楠梓區右昌街266號",
+    priceLevel: 1,
+    dishes: ["大腸臭臭鍋", "海鮮豆腐鍋", "泡菜鍋", "麻辣鍋"],
+    image: "",
+    note: "只收現金、有素食"
+  },
+  {
+    name: "佳昌 蔬菜排骨麵",
+    categories: ["麵食"],
+    hours: {
+      mon: [],
+      tue: [["10:30", "13:20"], ["16:30", "19:20"]],
+      wed: [["10:30", "13:20"], ["16:30", "19:20"]],
+      thu: [],
+      fri: [["10:30", "13:20"], ["16:30", "19:20"]],
+      sat: [["10:30", "13:20"]],
+      sun: []
+    },
+    phone: "073635912",
+    address: "811高雄市楠梓區慶昌里慶昌街19號",
+    priceLevel: 1,
+    dishes: ["蔬菜麵", "紅燒排骨麵", "手工乾麵"],
+    image: "",
+    note: "每日限量手工麵，只收現金、狗狗友善"
+  },
+  {
+    name: "饗鴨鴨肉專賣店",
+    categories: ["便當"],
+    hours: {
+      mon: [["10:30", "14:00"], ["16:00", "20:00"]],
+      tue: [["10:30", "14:00"], ["16:00", "20:00"]],
+      wed: [["10:30", "14:00"], ["16:00", "20:00"]],
+      thu: [["10:30", "14:00"], ["16:00", "20:00"]],
+      fri: [["10:30", "14:00"], ["16:00", "20:00"]],
+      sat: [["10:30", "14:00"], ["16:00", "20:00"]],
+      sun: []
+    },
+    phone: "073641616",
+    address: "811高雄市楠梓區翠屏里加仁路100號",
+    priceLevel: 1,
+    dishes: ["鴨肉便當", "鴨腿便當", "鴨肉冬粉", "綜合下水湯"],
+    image: "",
+    note: "不接受訂位"
+  },
+  {
+    name: "VASO HOME 肉燥飯舖【高雄楠梓店】",
+    categories: ["便當", "小吃"],
+    hours: {
+      mon: [["11:30", "14:30"], ["17:00", "21:00"]],
+      tue: [["11:30", "14:30"], ["17:00", "21:00"]],
+      wed: [["11:30", "14:30"], ["17:00", "21:00"]],
+      thu: [["11:30", "14:30"], ["17:00", "21:00"]],
+      fri: [["11:30", "14:30"], ["17:00", "21:00"]],
+      sat: [["11:30", "14:30"], ["17:00", "21:00"]],
+      sun: [["11:30", "14:30"], ["17:00", "21:00"]]
+    },
+    phone: "073600013",
+    address: "811高雄市楠梓區仁昌里益群路63號",
+    priceLevel: 1,
+    dishes: ["半熟黃金蛋肉燥飯", "龍味魚丸湯", "麻辣肉燥油條", "青花玉米筍"],
+    image: "",
+    note: "米其林必比登推薦，不接受訂位、狗狗友善"
+  },
+  {
+    name: "阿荷台灣越南美食",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["10:00", "14:00"], ["17:00", "20:00"]],
+      tue: [["10:00", "14:00"], ["17:00", "20:00"]],
+      wed: [["10:00", "14:00"], ["17:00", "20:00"]],
+      thu: [["10:00", "14:00"], ["17:00", "20:00"]],
+      fri: [["10:00", "14:00"], ["17:00", "20:00"]],
+      sat: [["10:00", "14:00"], ["17:00", "20:00"]],
+      sun: []
+    },
+    phone: "0917579287",
+    address: "811高雄市楠梓區裕昌里東昌街6號",
+    priceLevel: 1,
+    dishes: ["清燉牛肉河粉", "炸春捲", "蝦肉生菜春捲", "豬肉河粉"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "阿布泡芙",
+    categories: ["飲料甜點"],
+    hours: {
+      mon: [],
+      tue: [["15:00", "19:00"]],
+      wed: [["15:00", "19:00"]],
+      thu: [["15:00", "19:00"]],
+      fri: [["15:00", "19:00"]],
+      sat: [["15:00", "19:00"]],
+      sun: []
+    },
+    phone: "",
+    address: "811高雄市楠梓區藍田里大學西路532號",
+    priceLevel: 1,
+    dishes: ["濃情巧克力泡芙", "麵茶泡芙"],
+    image: "",
+    note: "售完為止，可先到 IG 私訊預訂"
+  },
+  {
+    name: "聰明小豬",
+    categories: ["異國料理"],
+    hours: {
+      mon: [],
+      tue: [["10:30", "20:00"]],
+      wed: [["10:30", "20:00"]],
+      thu: [["10:30", "20:00"]],
+      fri: [["10:30", "20:00"]],
+      sat: [["10:30", "20:00"]],
+      sun: []
+    },
+    phone: "0980363770",
+    address: "811高雄市楠梓區藍田里大學二十一路568號",
+    priceLevel: 2,
+    dishes: ["炙燒松阪豬", "柚子胡椒雞", "主廚精選牛排", "蒜香白酒奶油義大利麵"],
+    image: "",
+    note: "燉飯、義大利麵、全日餐，狗狗友善"
+  },
+  {
+    name: "天香福麵館",
+    categories: ["麵食"],
+    hours: {
+      mon: [],
+      tue: [["11:00", "14:00"], ["17:00", "20:00"]],
+      wed: [["11:00", "14:00"], ["17:00", "20:00"]],
+      thu: [["11:00", "14:00"], ["17:00", "20:00"]],
+      fri: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sat: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sun: [["11:00", "14:00"], ["17:00", "19:00"]]
+    },
+    phone: "0908040938",
+    address: "811高雄市楠梓區中和里大學三十六街99號",
+    priceLevel: 1,
+    dishes: ["麻醬辣麵", "乾拌麵"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "桃金鍋物 - 楠梓藍田門市",
+    categories: ["火鍋"],
+    hours: {
+      mon: [["11:00", "02:00"]],
+      tue: [["11:00", "02:00"]],
+      wed: [["11:00", "02:00"]],
+      thu: [["11:00", "02:00"]],
+      fri: [["11:00", "02:00"]],
+      sat: [["11:00", "02:00"]],
+      sun: [["11:00", "02:00"]]
+    },
+    phone: "073655559",
+    address: "811高雄市楠梓區中興里藍田路1058號",
+    priceLevel: 3,
+    dishes: ["個人鍋", "自助吧無限取用"],
+    image: "",
+    note: "營業到凌晨 2 點，需要預訂"
+  },
+  {
+    name: "內惟嫩仙草",
+    categories: ["飲料甜點"],
+    hours: {
+      mon: [["15:00", "20:00"]],
+      tue: [["15:00", "20:00"]],
+      wed: [["15:00", "20:00"]],
+      thu: [["15:00", "20:00"]],
+      fri: [["15:00", "20:00"]],
+      sat: [],
+      sun: [["15:00", "20:00"]]
+    },
+    phone: "0976107007",
+    address: "811高雄市楠梓區中興里大學西路68號",
+    priceLevel: 1,
+    dishes: ["仙草冰", "燒仙草", "仙草冰磚"],
+    image: "",
+    note: "只收現金、每日限量"
+  },
+  {
+    name: "好味越南料理",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["10:00", "20:00"]],
+      tue: [["10:00", "20:00"]],
+      wed: [["10:00", "20:00"]],
+      thu: [["10:00", "20:00"]],
+      fri: [["10:00", "20:00"]],
+      sat: [["10:00", "20:00"]],
+      sun: []
+    },
+    phone: "0973732296",
+    address: "811高雄市楠梓區清豐里創新路11號",
+    priceLevel: 1,
+    dishes: ["酸辣牛肉湯", "養生春捲", "虱目魚丸湯", "豬肉燴飯"],
+    image: "",
+    note: "只收現金"
+  },
+  {
+    name: "吃義碗麵",
+    categories: ["異國料理"],
+    hours: {
+      mon: [],
+      tue: [["11:30", "14:30"], ["17:00", "21:00"]],
+      wed: [["11:30", "14:30"], ["17:00", "21:00"]],
+      thu: [["11:30", "14:30"], ["17:00", "21:00"]],
+      fri: [["11:30", "14:30"], ["17:00", "21:00"]],
+      sat: [["11:30", "14:30"], ["17:00", "21:00"]],
+      sun: [["11:30", "14:30"], ["17:00", "21:00"]]
+    },
+    phone: "073530513",
+    address: "811高雄市楠梓區清豐里土庫一路20號",
+    priceLevel: 2,
+    dishes: ["明太子奶油焗烤義大利麵", "松露野菇燉飯", "南瓜嫩雞焗烤燉飯"],
+    image: "",
+    note: "義大利麵、燉飯"
+  },
+  {
+    name: "大內製麵",
+    categories: ["麵食"],
+    hours: {
+      mon: [],
+      tue: [["11:00", "14:00"], ["17:00", "20:00"]],
+      wed: [["11:00", "14:00"], ["17:00", "20:00"]],
+      thu: [["11:00", "14:00"], ["17:00", "20:00"]],
+      fri: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sat: [["11:00", "14:00"], ["17:00", "20:00"]],
+      sun: [["11:00", "14:00"], ["17:00", "20:00"]]
+    },
+    phone: "073518378",
+    address: "811高雄市楠梓區清豐里土庫路220號",
+    priceLevel: 1,
+    dishes: ["古早味豆菜麵", "牛肉麵", "燙青菜"],
+    image: "",
+    note: ""
+  },
+  {
+    name: "劉家酸白菜火鍋 楠梓店",
+    categories: ["火鍋"],
+    hours: {
+      mon: [["11:00", "14:00"], ["14:30", "22:30"]],
+      tue: [["11:00", "14:00"], ["14:30", "22:30"]],
+      wed: [["11:00", "14:00"], ["14:30", "22:30"]],
+      thu: [["11:00", "14:00"], ["14:30", "22:30"]],
+      fri: [["11:00", "14:00"], ["14:30", "22:30"]],
+      sat: [["11:00", "14:00"], ["14:30", "22:30"]],
+      sun: [["11:00", "14:00"], ["14:30", "22:00"]]
+    },
+    phone: "073551058",
+    address: "811高雄市楠梓區清豐里楠梓路430號",
+    priceLevel: 3,
+    dishes: ["酸白菜火鍋", "酸菜白肉鍋", "手工水餃"],
+    image: "",
+    note: "需要預訂"
+  },
+  {
+    name: "MAD小餐館",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["11:00", "22:00"]],
+      tue: [],
+      wed: [],
+      thu: [["11:00", "22:00"]],
+      fri: [["11:00", "22:00"]],
+      sat: [["11:00", "22:00"]],
+      sun: [["11:00", "22:00"]]
+    },
+    phone: "073555711",
+    address: "811高雄市楠梓區清豐里土庫三路215號",
+    priceLevel: 3,
+    dishes: ["白酒蛤蜊", "炸物拼盤", "義大利麵"],
+    image: "",
+    note: "西式小餐館，只收現金。午餐最後點餐 15:00、晚餐 20:30"
+  },
+  {
+    name: "燒肉魂 楠梓",
+    categories: ["異國料理"],
+    hours: {
+      mon: [["18:00", "23:00"]],
+      tue: [["18:00", "23:00"]],
+      wed: [["18:00", "23:00"]],
+      thu: [["18:00", "23:00"]],
+      fri: [["18:00", "23:00"]],
+      sat: [["18:00", "23:00"]],
+      sun: [["18:00", "23:00"]]
+    },
+    phone: "073644359",
+    address: "811高雄市楠梓區藍田里大學東路71號",
+    priceLevel: 3,
+    dishes: ["日式燒肉", "炭火燒肉"],
+    image: "",
+    note: "需要預訂"
+  },
+  {
+    name: "美濃哈客族",
+    categories: ["合菜熱炒"],
+    hours: {
+      mon: [],
+      tue: [],
+      wed: [["11:30", "14:00"], ["17:00", "20:30"]],
+      thu: [["11:30", "14:00"], ["17:00", "20:30"]],
+      fri: [["11:30", "14:00"], ["17:00", "20:30"]],
+      sat: [["11:30", "14:00"], ["17:00", "20:30"]],
+      sun: [["11:30", "14:00"], ["17:00", "20:30"]]
+    },
+    phone: "075910009",
+    address: "811高雄市楠梓區藍田里大學七街152號",
+    priceLevel: 2,
+    dishes: ["客家小炒", "薑絲大腸", "鳳梨蝦球", "糖醋黃魚"],
+    image: "",
+    note: "客家菜館，適合多人合菜。只收現金、需要預訂"
+  },
+  {
+    name: "火牛牛肉麵（楠梓店）",
+    categories: ["麵食"],
+    hours: {
+      mon: [["11:00", "21:00"]],
+      tue: [["11:00", "21:00"]],
+      wed: [["11:00", "21:00"]],
+      thu: [["11:00", "21:00"]],
+      fri: [["11:00", "21:00"]],
+      sat: [["11:00", "21:00"]],
+      sun: [["11:00", "21:00"]]
+    },
+    phone: "0909620007",
+    address: "811高雄市楠梓區藍田里藍昌路440號",
+    priceLevel: 2,
+    dishes: ["招牌牛肉麵", "五花牛肉麵", "醬醬臟庫麵", "哈哈燒肉捲餅"],
+    image: "",
+    note: "只收現金、狗狗友善"
+  },
+  {
+    name: "阿海海產-藍田店",
+    categories: ["合菜熱炒"],
+    hours: {
+      mon: [["17:00", "00:00"]],
+      tue: [],
+      wed: [["17:00", "00:00"]],
+      thu: [["17:00", "00:00"]],
+      fri: [["17:00", "00:00"]],
+      sat: [["17:00", "00:00"]],
+      sun: [["17:00", "00:00"]]
+    },
+    phone: "073645131",
+    address: "811高雄市楠梓區藍田里藍田路423號",
+    priceLevel: 3,
+    dishes: ["生魚片", "海鮮熱炒", "炭烤"],
+    image: "",
+    note: "海產熱炒，適合多人。只收現金"
+  },
+  {
+    name: "北平楊寶寶蒸餃德惠店",
+    categories: ["麵食"],
+    hours: {
+      mon: [["11:00", "14:00"], ["16:30", "21:00"]],
+      tue: [["11:00", "14:00"], ["16:30", "21:00"]],
+      wed: [["11:00", "14:00"], ["16:30", "21:00"]],
+      thu: [["11:00", "14:00"], ["16:30", "21:00"]],
+      fri: [["11:00", "14:00"], ["16:30", "21:00"]],
+      sat: [["11:00", "15:00"], ["16:30", "21:00"]],
+      sun: [["11:00", "15:00"], ["16:30", "21:00"]]
+    },
+    phone: "073650136",
+    address: "811高雄市楠梓區翠屏里德惠路81號",
+    priceLevel: 2,
+    dishes: ["蒸餃", "牛肉捲餅", "酸辣湯"],
+    image: "",
+    note: "米其林必比登推薦，只收現金"
+  }
 ];
-function everyDay(segs) { const h = {}; DAY_KEYS.forEach(k => h[k] = segs); return h; }
+// ===== 餐廳資料結束 =====
 
-/* =========================================================
-   3. 狀態
-   ========================================================= */
-const state = {
-  mode: "demo",            // "loading" 載入中 / "demo" 示範模式 / "public" 訪客 / "owner" 管理者
-  firebaseReady: false,
-  user: null,
-  restaurants: [],
-  history: [],
-  settings: structuredClone(DEFAULT_SETTINGS),
-  sel: { city: "", districts: [], openNow: true, tags: [], prices: [] },
-  skipped: new Set(),      // 本次按「不要這家」跳過的店
-  ignoreRecent: false,     // 暫時忽略「N 天內吃過」規則
-  spinning: false,
-  resultId: null,
-  manageQuery: "",
-  manageCity: ""
-};
-let fb = null;  // Firebase 模組與實例
 
-/* =========================================================
-   4. 小工具
-   ========================================================= */
-const $ = sel => document.querySelector(sel);
+// ===== 基本設定 =====
+const CATEGORIES = ["便當", "麵食", "小吃", "火鍋", "合菜熱炒", "早午餐", "異國料理", "飲料甜點"];
+const CAT_ICON = { "便當": "🍱", "麵食": "🍜", "小吃": "🍢", "火鍋": "🍲", "合菜熱炒": "🥘", "早午餐": "🥞", "異國料理": "🌮", "飲料甜點": "🧋" };
+const PRICE_LEVELS = [
+  { level: 1, label: "💲 200以下" },
+  { level: 2, label: "💲💲 200–400" },
+  { level: 3, label: "💲💲💲 400–1000" },
+  { level: 4, label: "💲💲💲💲 1000以上" }
+];
+const PRICE_TEXT = { 1: "💲 200 元以下", 2: "💲💲 200～400 元", 3: "💲💲💲 400～1000 元", 4: "💲💲💲💲 1000 元以上" };
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const DAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
+const SOON_MINUTES = 30;
+const SPIN_MS = 3200;
+
+const state = { cats: new Set(), prices: new Set(), openOnly: true, spinning: false, current: null, muted: false };
+const $ = id => document.getElementById(id);
+
+// ===== 營業狀態判斷 =====
+const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + m; };
+
+// 把今天（和昨天跨夜延續過來）的時段，轉成「以今天 0 點為起點」的分鐘區間
+function todayRanges(r, now) {
+  const d = now.getDay();
+  const ranges = [];
+  for (const [s, e] of (r.hours[DAY_KEYS[d]] || [])) {
+    let a = toMin(s), b = toMin(e);
+    if (b <= a) b += 1440;
+    ranges.push([a, b]);
+  }
+  for (const [s, e] of (r.hours[DAY_KEYS[(d + 6) % 7]] || [])) {
+    const a = toMin(s), b = toMin(e);
+    if (b <= a) ranges.push([a - 1440, b]);
+  }
+  return ranges;
+}
+
+function getStatus(r, now = new Date()) {
+  const m = now.getHours() * 60 + now.getMinutes();
+  const ranges = todayRanges(r, now);
+  for (const [a, b] of ranges) {
+    if (m >= a && m < b) {
+      return b - m <= SOON_MINUTES
+        ? { key: "soon", text: `即將打烊（${b - m} 分）`, open: true }
+        : { key: "open", text: "營業中", open: true };
+    }
+  }
+  const todays = r.hours[DAY_KEYS[now.getDay()]] || [];
+  if (todays.length === 0) return { key: "off", text: "今日公休", open: false };
+  const later = ranges.filter(([a]) => a > m).sort((x, y) => x[0] - y[0])[0];
+  if (later) return { key: "closed", text: `尚未營業（${fmtMin(later[0])} 開）`, open: false };
+  return { key: "closed", text: "已打烊", open: false };
+}
+const fmtMin = v => `${String(Math.floor(v / 60) % 24).padStart(2, "0")}:${String(v % 60).padStart(2, "0")}`;
+
+function todayHoursText(r, now = new Date()) {
+  const list = r.hours[DAY_KEYS[now.getDay()]] || [];
+  if (list.length === 0) return "今日公休";
+  return list.map(([s, e]) => `${s}–${e}`).join("、");
+}
+
+function weekHoursHTML(r) {
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const today = new Date().getDay();
+  return order.map(d => {
+    const list = r.hours[DAY_KEYS[d]] || [];
+    const txt = list.length ? list.map(([s, e]) => `${s}–${e}`).join("、") : "公休";
+    const style = d === today ? ' style="font-weight:700;color:var(--red)"' : "";
+    return `<div${style}>週${DAY_NAMES[d]}　${txt}</div>`;
+  }).join("");
+}
+
+// ===== 小工具 =====
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const newId = () => (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-const clean = obj => JSON.parse(JSON.stringify(obj));  // Firestore 不接受 undefined
-function toast(msg) {
-  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
-  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 2200);
+const iconOf = r => CAT_ICON[r.categories[0]] || "🍽️";
+function thumbHTML(r) {
+  const icon = iconOf(r);
+  if (!r.image) return icon;
+  return `<img src="images/${esc(r.image)}" alt="${esc(r.name)}" loading="lazy" onerror="this.replaceWith(document.createTextNode('${icon}'))">`;
 }
-function lsGet(key, fallback) { try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; } catch { return fallback; } }
-function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+function formatPhone(p) {
+  if (!p) return "";
+  if (/^09\d{8}$/.test(p)) return `${p.slice(0, 4)}-${p.slice(4, 7)}-${p.slice(7)}`;
+  if (/^0\d{8}$/.test(p)) return `${p.slice(0, 2)}-${p.slice(2, 5)}-${p.slice(5)}`;
+  return p;
+}
+const mapUrl = r => "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(`${r.name} ${r.address || ""}`.trim());
 
-/* 從地址判斷縣市與區，例如「高雄市楠梓區…」→ { city: "高雄市", district: "楠梓區" } */
-function parseAddress(addr) {
-  const a = String(addr || "").replace(/^\s*\d{3,6}\s*/, "").replace(/^(台灣|臺灣)/, "").replace(/臺/g, "台");
-  const m = a.match(/^(.{2}[市縣])(.+?[區鄉鎮市])/);
-  if (!m) return { city: "", district: "" };
-  return { city: m[1], district: m[2] };
-}
-
-/* 營業時間 */
-const toMin = t => { const [h, m] = t.split(":").map(Number); return h * 60 + (m || 0); };
-function openStatus(r, now = new Date()) {
-  if (!r.hours) return { known: false };
-  const d = now.getDay(), cur = now.getHours() * 60 + now.getMinutes();
-  const today = r.hours[DAY_KEYS[d]] || [], yest = r.hours[DAY_KEYS[(d + 6) % 7]] || [];
-  for (const [s, e] of today) {
-    const S = toMin(s), E = toMin(e);
-    if (E > S) { if (cur >= S && cur < E) return { known: true, open: true, left: E - cur }; }
-    else if (cur >= S) return { known: true, open: true, left: E + 1440 - cur };  // 跨午夜
-  }
-  for (const [s, e] of yest) {  // 昨天開到今天凌晨
-    const S = toMin(s), E = toMin(e);
-    if (E <= S && cur < E) return { known: true, open: true, left: E - cur };
-  }
-  return { known: true, open: false };
-}
-const segText = segs => segs && segs.length ? segs.map(([s, e]) => `${s}–${e}`).join("、") : "公休";
-function todayHoursText(r) {
-  if (!r.hours) return "未提供";
-  return segText(r.hours[DAY_KEYS[new Date().getDay()]]);
-}
-function parseSegs(text) {
-  const t = String(text || "").trim();
-  if (!t || t === "公休") return [];
-  if (/24\s*小時/.test(t)) return [["00:00", "24:00"]];
-  const out = [];
-  for (const part of t.split(/[,，、;；\s]+/)) {
-    const m = part.match(/^(\d{1,2})[:：](\d{2})\s*[-–~～到]\s*(\d{1,2})[:：](\d{2})$/);
-    if (m) out.push([`${m[1].padStart(2, "0")}:${m[2]}`, `${m[3].padStart(2, "0")}:${m[4]}`]);
-  }
-  return out;
-}
-
-/* 整理一筆餐廳資料（匯入或表單送出時使用） */
-function normalizeRestaurant(raw) {
-  const r = { ...raw };
-  r.id = r.id || newId();
-  r.name = String(r.name || "").trim();
-  if ((!r.city || !r.district) && r.address) {
-    const p = parseAddress(r.address);
-    r.city = r.city || p.city; r.district = r.district || p.district;
-  }
-  if (r.city) r.city = r.city.replace(/臺/g, "台");
-  r.price = PRICES.includes(r.price) ? r.price : "$$";
-  r.dishes = Array.isArray(r.dishes) ? r.dishes : String(r.dishes || "").split(/[\n,，、]+/).map(s => s.trim()).filter(Boolean);
-  r.tags = Array.isArray(r.tags) ? r.tags : [];
-  if (r.hours) {
-    const h = {}; let any = false;
-    DAY_KEYS.forEach(k => { const v = r.hours[k]; h[k] = Array.isArray(v) ? v : parseSegs(v); if (h[k].length) any = true; });
-    r.hours = any ? h : null;
-  } else r.hours = null;
-  r.favorite = !!r.favorite; r.paused = !!r.paused;
-  return r;
-}
-
-/* =========================================================
-   5. 資料存取
-   - 餐廳、類型標籤：存在雲端，所有人都能讀，只有管理者能改
-   - 吃過紀錄：管理者存雲端；訪客只存在自己這台裝置的瀏覽器
-   - 個人偏好（不重複天數、上次選的區域）：存在這台裝置的瀏覽器
-   ========================================================= */
-const PREF_KEYS = ["noRepeatDays", "lastCity", "lastDistricts"];
-const canEdit = () => state.mode === "owner" || state.mode === "demo";
-const cloudDoc = (...p) => fb.f.doc(fb.db, ...p);
-const store = {
-  async saveRestaurant(r) {
-    const i = state.restaurants.findIndex(x => x.id === r.id);
-    if (i >= 0) state.restaurants[i] = r; else state.restaurants.push(r);
-    if (state.mode === "owner") await fb.f.setDoc(cloudDoc("restaurants", r.id), clean(r));
-  },
-  async deleteRestaurant(id) {
-    state.restaurants = state.restaurants.filter(x => x.id !== id);
-    if (state.mode === "owner") await fb.f.deleteDoc(cloudDoc("restaurants", id));
-  },
-  async bulkSave(list) {
-    list.forEach(r => {
-      const i = state.restaurants.findIndex(x => x.id === r.id);
-      if (i >= 0) state.restaurants[i] = r; else state.restaurants.push(r);
-    });
-    if (state.mode !== "owner") return;
-    for (let i = 0; i < list.length; i += 400) {
-      const batch = fb.f.writeBatch(fb.db);
-      list.slice(i, i + 400).forEach(r => batch.set(cloudDoc("restaurants", r.id), clean(r)));
-      await batch.commit();
-    }
-  },
-  async addHistory(h) {
-    state.history.unshift(h);
-    if (state.mode === "owner") await fb.f.setDoc(cloudDoc("history", h.id), clean(h));
-    else if (state.mode === "public") lsSet("wte-history", state.history.slice(0, 200));
-  },
-  async deleteHistory(id) {
-    state.history = state.history.filter(x => x.id !== id);
-    if (state.mode === "owner") await fb.f.deleteDoc(cloudDoc("history", id));
-    else if (state.mode === "public") lsSet("wte-history", state.history);
-  },
-  savePrefs() {
-    const prefs = {}; PREF_KEYS.forEach(k => prefs[k] = state.settings[k]);
-    lsSet("wte-prefs", prefs);
-  },
-  async saveTags() {
-    if (state.mode === "owner") await fb.f.setDoc(cloudDoc("config", "main"), { tags: state.settings.tags });
-  }
-};
-async function safe(fn, okMsg) {
-  try { await fn(); if (okMsg) toast(okMsg); }
-  catch (e) { console.error(e); toast("儲存失敗：" + (e.code || e.message)); }
-}
-function loadPrefs() {
-  const p = lsGet("wte-prefs", {}), out = {};
-  PREF_KEYS.forEach(k => { if (p[k] !== undefined) out[k] = p[k]; });
-  return out;
-}
-
-function loadDemo() {
-  state.mode = "demo";
-  state.restaurants = DEMO_RESTAURANTS.map(normalizeRestaurant);
-  state.history = [];
-  state.settings = { ...structuredClone(DEFAULT_SETTINGS), ...loadPrefs() };
-}
-/* 讀取所有人共用的餐廳與標籤 */
-async function loadShared() {
-  const { collection, getDocs, getDoc } = fb.f;
-  const [rs, cfg] = await Promise.all([
-    getDocs(collection(fb.db, "restaurants")),
-    getDoc(cloudDoc("config", "main"))
-  ]);
-  state.restaurants = rs.docs.map(d => normalizeRestaurant({ ...d.data(), id: d.id }));
-  const tags = cfg.exists() && Array.isArray(cfg.data().tags) ? cfg.data().tags : DEFAULT_TAGS;
-  state.settings = { ...structuredClone(DEFAULT_SETTINGS), tags, ...loadPrefs() };
-}
-async function loadOwnerHistory() {
-  const hs = await fb.f.getDocs(fb.f.collection(fb.db, "history"));
-  return hs.docs.map(d => ({ ...d.data(), id: d.id })).sort((a, b) => b.at - a.at);
-}
-
-/* =========================================================
-   6. Firebase 初始化與登入
-   ========================================================= */
-async function initFirebase() {
-  if (!firebaseConfig.apiKey) return false;
-  const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/`;
-  const [appM, authM, fsM] = await Promise.all([
-    import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")
-  ]);
-  const app = appM.initializeApp(firebaseConfig);
-  fb = { app, a: authM, f: fsM, auth: authM.getAuth(app), db: fsM.getFirestore(app) };
-  state.firebaseReady = true;
-  authM.getRedirectResult(fb.auth).catch(() => {});
-  authM.onAuthStateChanged(fb.auth, async user => {
-    // 不是管理者的帳號：提示後自動登出（登出後會再觸發一次，進入訪客模式）
-    if (user && (user.email || "").toLowerCase() !== OWNER_EMAIL.toLowerCase()) {
-      toast("這個帳號沒有管理權限，已自動登出");
-      await authM.signOut(fb.auth);
-      return;
-    }
-    state.user = user;
-    try {
-      await loadShared();
-      if (user) { state.mode = "owner"; state.history = await loadOwnerHistory(); }
-      else { state.mode = "public"; state.history = lsGet("wte-history", []); }
-    } catch (e) {
-      console.error(e); toast("讀取雲端資料失敗：" + (e.code || e.message)); loadDemo();
-    }
-    restoreSelection(); renderAll();
-  });
+// ===== 篩選 =====
+function matchFilters(r, now) {
+  if (state.cats.size && !r.categories.some(c => state.cats.has(c))) return false;
+  if (state.prices.size && !state.prices.has(r.priceLevel)) return false;
+  if (state.openOnly && !getStatus(r, now).open) return false;
   return true;
 }
-async function login() {
-  if (!state.firebaseReady) { toast("尚未設定 Firebase，目前是示範模式"); return; }
-  const provider = new fb.a.GoogleAuthProvider();
-  try { await fb.a.signInWithPopup(fb.auth, provider); }
-  catch (e) {
-    if (e.code === "auth/popup-blocked" || e.code === "auth/operation-not-supported-in-this-environment") {
-      await fb.a.signInWithRedirect(fb.auth, provider);
-    } else if (e.code !== "auth/popup-closed-by-user" && e.code !== "auth/cancelled-popup-request") {
-      toast("登入失敗：" + e.code);
-    }
-  }
-}
-async function logout() { if (fb) await fb.a.signOut(fb.auth); }
+const candidates = () => { const now = new Date(); return RESTAURANTS.filter(r => matchFilters(r, now)); };
 
-/* =========================================================
-   7. 篩選與抽選邏輯
-   ========================================================= */
-function cities() {
-  const m = new Map();
-  state.restaurants.forEach(r => { if (r.city) m.set(r.city, (m.get(r.city) || 0) + 1); });
-  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+function buildChips() {
+  $("catChips").innerHTML = CATEGORIES.map(c =>
+    `<button class="chip" data-cat="${c}">${CAT_ICON[c]} ${c}</button>`).join("");
+  $("priceChips").innerHTML = PRICE_LEVELS.map(p =>
+    `<button class="chip" data-price="${p.level}">${p.label}</button>`).join("");
+
+  $("catChips").addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    toggleSet(state.cats, b.dataset.cat); b.classList.toggle("active"); refresh();
+  });
+  $("priceChips").addEventListener("click", e => {
+    const b = e.target.closest(".chip"); if (!b) return;
+    toggleSet(state.prices, Number(b.dataset.price)); b.classList.toggle("active"); refresh();
+  });
+  $("openOnly").addEventListener("change", e => { state.openOnly = e.target.checked; refresh(); });
+  $("resetBtn").addEventListener("click", () => {
+    state.cats.clear(); state.prices.clear(); state.openOnly = true;
+    $("openOnly").checked = true;
+    document.querySelectorAll(".chip.active").forEach(c => c.classList.remove("active"));
+    refresh();
+  });
 }
-function districtsOf(city) {
-  const m = new Map();
-  state.restaurants.filter(r => r.city === city).forEach(r => { const d = r.district || "未分區"; m.set(d, (m.get(d) || 0) + 1); });
-  return [...m.entries()].sort((a, b) => b[1] - a[1]);
-}
-function allTags() {
-  const set = new Set(state.settings.tags);
-  state.restaurants.forEach(r => r.tags.forEach(t => set.add(t)));
-  return [...set];
-}
-function recentIds() {
-  const days = Number(state.settings.noRepeatDays) || 0;
-  if (!days) return new Set();
-  const since = Date.now() - days * 86400000;
-  return new Set(state.history.filter(h => h.at >= since).map(h => h.rid));
-}
-/* 回傳每一層篩選後的數量，方便在 0 家時告訴使用者是哪個條件卡住 */
-function computeCandidates() {
-  const s = state.sel, now = new Date();
-  const inRegion = state.restaurants.filter(r => r.city === s.city && s.districts.includes(r.district || "未分區"));
-  const notPaused = inRegion.filter(r => !r.paused);
-  const byOpen = s.openNow ? notPaused.filter(r => { const st = openStatus(r, now); return !st.known || st.open; }) : notPaused;
-  const byTag = s.tags.length ? byOpen.filter(r => r.tags.some(t => s.tags.includes(t))) : byOpen;
-  const byPrice = s.prices.length ? byTag.filter(r => s.prices.includes(r.price)) : byTag;
-  const recent = state.ignoreRecent ? new Set() : recentIds();
-  const notRecent = byPrice.filter(r => !recent.has(r.id));
-  const final = notRecent.filter(r => !state.skipped.has(r.id));
-  return {
-    final,
-    stats: {
-      region: inRegion.length, paused: inRegion.length - notPaused.length,
-      closed: notPaused.length - byOpen.length, tagCut: byOpen.length - byTag.length,
-      priceCut: byTag.length - byPrice.length, recent: byPrice.length - notRecent.length,
-      skipped: notRecent.length - final.length
-    }
-  };
-}
-function weightedPick(list) {
-  const total = list.reduce((sum, r) => sum + (r.favorite ? FAV_WEIGHT : 1), 0);
-  let x = Math.random() * total;
-  for (const r of list) { x -= r.favorite ? FAV_WEIGHT : 1; if (x < 0) return r; }
-  return list[list.length - 1];
+const toggleSet = (set, v) => set.has(v) ? set.delete(v) : set.add(v);
+
+// ===== 餐廳清單 =====
+function renderList() {
+  const now = new Date();
+  const rank = { open: 0, soon: 1, closed: 2, off: 3 };
+  const items = RESTAURANTS.map((r, i) => ({ r, i, st: getStatus(r, now), ok: matchFilters(r, now) }))
+    .sort((a, b) => (b.ok - a.ok) || (rank[a.st.key] - rank[b.st.key]) || a.i - b.i);
+  $("list").innerHTML = items.map(({ r, i, st, ok }) => `
+    <button class="card ${ok ? "" : "dim"}" data-idx="${i}">
+      <div class="thumb">${thumbHTML(r)}</div>
+      <div class="info">
+        <div class="name">${esc(r.name)}</div>
+        <div><span class="status ${st.key}">${st.text}</span></div>
+        <div class="tags">${r.categories.map(c => `<span class="tag">${esc(c)}</span>`).join("")}${r.priceLevel ? `<span class="tag">${"💲".repeat(r.priceLevel)}</span>` : ""}</div>
+        <div class="meta">今日：${todayHoursText(r, now)}</div>
+      </div>
+    </button>`).join("");
+  $("listInfo").textContent = `共 ${RESTAURANTS.length} 間，淡色＝不符合目前篩選`;
 }
 
-/* =========================================================
-   8. 畫面：抽選頁
-   ========================================================= */
-function restoreSelection() {
-  const cs = cities().map(c => c[0]);
-  const local = lsGet("wte-sel", {});
-  const lastCity = state.settings.lastCity || local.city;
-  state.sel.city = cs.includes(lastCity) ? lastCity : (cs[0] || "");
-  const ds = districtsOf(state.sel.city).map(d => d[0]);
-  const lastD = (state.settings.lastCity === state.sel.city ? state.settings.lastDistricts : local.districts) || [];
-  state.sel.districts = lastD.filter(d => ds.includes(d));
-  state.skipped.clear();
-}
-function rememberSelection() {
-  lsSet("wte-sel", { city: state.sel.city, districts: state.sel.districts });
-  state.settings.lastCity = state.sel.city;
-  state.settings.lastDistricts = state.sel.districts;
-  clearTimeout(rememberSelection._t);
-  store.savePrefs();
+function refresh() {
+  const n = candidates().length;
+  $("matchCount").textContent = n;
+  $("hint").textContent = n === 0 ? "沒有符合條件的餐廳，放寬一下篩選吧" : "";
+  renderList();
 }
 
-function renderDraw() {
-  const cs = cities();
-  $("#citySelect").innerHTML = cs.length
-    ? cs.map(([c, n]) => `<option value="${esc(c)}" ${c === state.sel.city ? "selected" : ""}>${esc(c)}（${n}）</option>`).join("")
-    : `<option value="">${state.mode === "loading" ? "載入中…" : "尚無餐廳資料"}</option>`;
+// ===== 拉霸機滾輪 =====
+const reelItemHTML = r => r
+  ? `<div class="reel-item"><div class="thumb">${thumbHTML(r)}</div><div class="name">${esc(r.name)}</div></div>`
+  : `<div class="reel-item placeholder">？？？</div>`;
+const itemH = () => parseFloat(getComputedStyle($("window")).getPropertyValue("--item-h")) || 84;
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 
-  const ds = districtsOf(state.sel.city);
-  const allOn = ds.length && ds.every(([d]) => state.sel.districts.includes(d));
-  $("#districtChips").innerHTML = ds.length
-    ? `<button class="chip ${allOn ? "on" : ""}" data-action="district-all">全部區</button>` +
-      ds.map(([d, n]) => `<button class="chip ${state.sel.districts.includes(d) ? "on" : ""}" data-action="district" data-v="${esc(d)}">${esc(d)} <span class="cnt">${n}</span></button>`).join("")
-    : `<span class="hint">${state.mode === "loading" ? "載入中…" : canEdit() ? "請先到「管理餐廳」新增餐廳" : "目前還沒有餐廳資料"}</span>`;
-
-  $("#openNowToggle").checked = state.sel.openNow;
-  $("#tagChips").innerHTML = allTags().map(t =>
-    `<button class="chip ${state.sel.tags.includes(t) ? "on" : ""}" data-action="tag" data-v="${esc(t)}">${esc(t)}</button>`).join("");
-  $("#priceChips").innerHTML = PRICES.map(p =>
-    `<button class="chip ${state.sel.prices.includes(p) ? "on" : ""}" data-action="price" data-v="${p}">${PRICE_TEXT[p]}</button>`).join("");
-
-  renderCount();
-  if (!state.spinning) renderIdleReel();
-  renderResult();
-}
-
-function renderCount() {
-  const { final, stats } = computeCandidates();
-  $("#candCount").textContent = final.length;
-  const noRegion = !state.sel.districts.length;
-  $("#spinBtn").disabled = state.spinning || noRegion || !final.length;
-  $("#spinBtn").textContent = noRegion ? "請先選擇區域" : (final.length ? "拉一下！" : "沒有符合的餐廳");
-
-  const parts = [];
-  if (stats.closed) parts.push(`未營業 ${stats.closed} 家`);
-  if (stats.paused) parts.push(`暫停 ${stats.paused} 家`);
-  if (stats.recent) parts.push(`${state.settings.noRepeatDays} 天內吃過 ${stats.recent} 家`);
-  if (stats.skipped) parts.push(`本次跳過 ${stats.skipped} 家 <button data-action="clear-skip">清除</button>`);
-  let html = parts.length ? "已排除：" + parts.join("、") : "";
-  if (!noRegion && !final.length) {
-    const tips = [];
-    if (stats.recent) tips.push(`<button data-action="ignore-recent">忽略「吃過不重複」再抽</button>`);
-    if (stats.closed) tips.push("可關閉「只看現在營業中」");
-    if (stats.tagCut || stats.priceCut) tips.push("可減少類型或價位條件");
-    if (tips.length) html += (html ? "<br>" : "") + "建議：" + tips.join("；");
-  }
-  if (state.ignoreRecent) html += (html ? "<br>" : "") + `目前忽略「吃過不重複」 <button data-action="restore-recent">恢復</button>`;
-  $("#excludedLine").innerHTML = html;
-}
-
-const REEL_H = 56;
-function renderIdleReel() {
-  // 待機畫面：中間那格顯示「？」，上下兩格放候選店名當預告
-  const { final } = computeCandidates();
-  const names = final.length >= 2 ? [final[0].name, "？", final[1].name] : ["", "？", ""];
-  const reel = $("#reel");
-  reel.style.transition = "none";
-  reel.style.transform = "translateY(0)";
-  reel.innerHTML = names.map(n => `<div class="reel-item">${esc(n)}</div>`).join("");
+function idleReel() {
+  const a = pick(RESTAURANTS), b = pick(RESTAURANTS);
+  $("strip").innerHTML = reelItemHTML(a) + reelItemHTML(null) + reelItemHTML(b);
+  $("strip").style.transform = "translateY(0px)";
+  state.current = null;
 }
 
 function spin() {
   if (state.spinning) return;
-  if (!state.sel.districts.length) { toast("請先選擇區域"); return; }
-  const { final } = computeCandidates();
-  if (!final.length) { toast("沒有符合條件的餐廳"); return; }
+  const pool = candidates();
+  if (pool.length === 0) {
+    $("hint").textContent = "沒有符合條件的餐廳，放寬一下篩選吧";
+    sound.buzz();
+    return;
+  }
+  sound.unlock();
+  state.spinning = true;
+  setBusy(true);
+  $("hint").textContent = "";
 
-  const winner = weightedPick(final);
-  state.spinning = true; state.resultId = null;
-  renderResult(); renderCount();
+  const target = pick(pool);
+  const COUNT = 36;
+  const seq = [pick(RESTAURANTS), state.current];
+  for (let i = 0; i < COUNT; i++) seq.push(pick(pool));
+  seq.push(target, pick(pool));
+  $("strip").innerHTML = seq.map(reelItemHTML).join("");
 
-  // 拉桿動畫
-  const lever = $("#lever"); lever.classList.add("pulled");
-  setTimeout(() => lever.classList.remove("pulled"), 450);
+  const h = itemH();
+  const startY = 0;                         // seq[1] 在中間那格
+  const endY = -(seq.length - 3) * h;       // target 在中間那格
+  const strip = $("strip");
+  const t0 = performance.now();
+  let lastIdx = 0;
+  const ease = t => 1 - Math.pow(1 - t, 4);
 
-  // 組出一長串名字，最後停在 winner（放在倒數第二格，讓它位於視窗中間）
-  const strip = [];
-  const loops = Math.max(26, final.length * 2);
-  for (let i = 0; i < loops; i++) strip.push(final[Math.floor(Math.random() * final.length)].name);
-  strip.push(winner.name);
-  strip.push(final[Math.floor(Math.random() * final.length)].name);
-  const k = strip.length - 2;
+  function frame(now) {
+    const t = Math.min(1, (now - t0) / SPIN_MS);
+    const y = startY + (endY - startY) * ease(t);
+    strip.style.transform = `translateY(${y}px)`;
+    const idx = Math.floor(-y / h + 0.5);
+    if (idx !== lastIdx) { lastIdx = idx; sound.tick(); }
+    strip.classList.toggle("blur", t < 0.55);
+    if (t < 1) requestAnimationFrame(frame);
+    else finish(target);
+  }
+  requestAnimationFrame(frame);
+}
 
-  const reel = $("#reel");
-  reel.style.transition = "none";
-  reel.style.transform = "translateY(0)";
-  reel.innerHTML = strip.map(n => `<div class="reel-item">${esc(n)}</div>`).join("");
-  void reel.offsetHeight;  // 強制瀏覽器先套用起始位置，動畫才會從頭跑
-  reel.style.transition = "transform 2.6s cubic-bezier(.12,.72,.16,1)";
-  reel.style.transform = `translateY(${-(k - 1) * REEL_H}px)`;
+function finish(r) {
+  state.spinning = false;
+  state.current = r;
+  setBusy(false);
+  sound.ding();
+  setTimeout(() => showResult(r, true), 350);
+}
 
-  let done = false;
-  const finish = () => {
-    if (done) return; done = true;
-    state.spinning = false; state.resultId = winner.id;
-    if (navigator.vibrate) { try { navigator.vibrate(40); } catch {} }
-    renderCount(); renderResult();
-    setTimeout(() => $("#resultBox").scrollIntoView({ behavior: "smooth", block: "nearest" }), 50);
+function setBusy(b) {
+  $("spinBtn").disabled = b;
+  $("lever").disabled = b;
+  $("machine").classList.toggle("spinning", b);
+}
+
+function buildBulbs() {
+  const box = $("bulbs");
+  const w = box.clientWidth, h = box.clientHeight, gap = 26;
+  const html = [];
+  let k = 0;
+  const put = (x, y) => html.push(`<span class="bulb ${k++ % 2 ? "alt" : ""}" style="left:${x - 4.5}px;top:${y - 4.5}px"></span>`);
+  for (let x = 14; x <= w - 14; x += gap) { put(x, 0); put(x, h); }
+  for (let y = gap; y <= h - gap; y += gap) { put(0, y); put(w, y); }
+  box.innerHTML = html.join("");
+}
+
+// 拉桿：點一下或往下拉都會啟動
+function setupLever() {
+  const lever = $("lever");
+  const pull = () => {
+    if (state.spinning) return;
+    sound.unlock();
+    sound.clank();
+    lever.classList.add("pulled");
+    setTimeout(() => { lever.classList.remove("pulled"); spin(); }, 280);
   };
-  reel.addEventListener("transitionend", finish, { once: true });
-  setTimeout(finish, 2900);
+  lever.addEventListener("click", pull);
+  $("spinBtn").addEventListener("click", () => { sound.unlock(); sound.clank(); spin(); });
 }
 
-function mapLink(r) {
-  return r.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.name + " " + (r.address || ""))}`;
-}
-function renderResult() {
-  const box = $("#resultBox");
-  const r = state.restaurants.find(x => x.id === state.resultId);
-  if (!r) { box.innerHTML = ""; return; }
-  const st = openStatus(r);
-  const statusHtml = !st.known ? `<span class="hint">營業時間未提供</span>`
-    : st.open ? `<span class="status-open">營業中</span>` : `<span class="status-closed">目前休息</span>`;
-  const warn = st.known && st.open && st.left <= CLOSING_SOON_MIN
-    ? `<div class="closing-warn">⚠️ 再 ${st.left} 分鐘就打烊了，要快一點！</div>` : "";
-  const shareText = `今天吃這家：${r.name}\n${r.address || ""}\n${mapLink(r)}`;
-  box.innerHTML = `
-    <div class="card result">
-      <p class="result-name">${r.favorite ? "⭐ " : ""}${esc(r.name)}</p>
-      <div class="meta">${esc(r.city)} ${esc(r.district)}　<span class="price">${esc(r.price)}</span>　${statusHtml}</div>
-      ${r.tags.length ? `<div class="tags">${r.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}</div>` : ""}
-      ${warn}
-      <ul class="info-list">
-        <li><span>今日營業</span><span>${esc(todayHoursText(r))}</span></li>
-        ${r.dishes.length ? `<li><span>推薦餐點</span><span>${r.dishes.map(esc).join("、")}</span></li>` : ""}
-        ${r.address ? `<li><span>地址</span><span>${esc(r.address)}</span></li>` : ""}
-        ${r.phone ? `<li><span>電話</span><span>${esc(r.phone)}</span></li>` : ""}
-      </ul>
-      <div class="btn-row">
-        ${r.phone ? `<a class="btn" href="tel:${esc(r.phone.replace(/[^\d+]/g, ""))}">📞 撥打</a>` : ""}
-        <a class="btn" href="${esc(mapLink(r))}" target="_blank" rel="noopener">🗺️ 導航</a>
-        <a class="btn" href="https://line.me/R/share?text=${encodeURIComponent(shareText)}" target="_blank" rel="noopener">💬 LINE</a>
+// ===== 結果卡 / 詳細資料 =====
+function showResult(r, fromSpin) {
+  const st = getStatus(r);
+  const phone = r.phone ? `<a class="btn-call" href="tel:${esc(r.phone)}">📞 撥打電話</a>` : "";
+  const map = `<a class="btn-map" href="${mapUrl(r)}" target="_blank" rel="noopener">📍 開啟地圖</a>`;
+  const again = fromSpin
+    ? `<button class="btn-again" id="againBtn">🎰 再抽一次</button>`
+    : `<button class="btn-again" id="againBtn">關閉</button>`;
+  $("result").innerHTML = `
+    <button class="close-x" id="closeX" aria-label="關閉">✕</button>
+    ${fromSpin ? `<div class="ribbon">🎉 就決定吃這間！🎉</div>` : ""}
+    <div class="thumb hero">${thumbHTML(r)}</div>
+    <div class="body">
+      <h2>${esc(r.name)}</h2>
+      <div class="tags">
+        <span class="status ${st.key}">${st.text}</span>
+        ${r.categories.map(c => `<span class="tag">${CAT_ICON[c] || ""} ${esc(c)}</span>`).join("")}
       </div>
-      <div class="btn-row">
-        <button class="btn" data-action="reject">不要這家，重抽</button>
-        <button class="btn primary" data-action="eat">就吃這家！</button>
-      </div>
+      <dl>
+        <dt>今日營業</dt><dd>${todayHoursText(r)}</dd>
+        ${r.dishes?.length ? `<dt>推薦餐點</dt><dd>${r.dishes.map(esc).join("、")}</dd>` : ""}
+        ${r.priceLevel ? `<dt>每人消費</dt><dd>${PRICE_TEXT[r.priceLevel]}</dd>` : ""}
+        ${r.phone ? `<dt>電話</dt><dd>${formatPhone(r.phone)}</dd>` : ""}
+        ${r.address ? `<dt>地址</dt><dd>${esc(r.address)}</dd>` : ""}
+        <dt>每週營業</dt><dd>${weekHoursHTML(r)}</dd>
+      </dl>
+      ${r.note ? `<div class="note">📝 ${esc(r.note)}</div>` : ""}
+      <div class="actions">${phone}${map}${again}</div>
     </div>`;
+  if (!r.phone) $("result").querySelector(".btn-map").style.gridColumn = "1 / -1";
+  $("overlay").classList.add("show");
+  $("closeX").onclick = closeResult;
+  $("againBtn").onclick = () => { closeResult(); if (fromSpin) setTimeout(spin, 200); };
 }
+function closeResult() { $("overlay").classList.remove("show"); }
 
-/* =========================================================
-   9. 畫面：吃過紀錄
-   ========================================================= */
-function fmtDate(ms) {
-  const d = new Date(ms);
-  const w = "日一二三四五六"[d.getDay()];
-  return `${d.getMonth() + 1}/${d.getDate()}（${w}）${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-}
-function renderHistory() {
-  $("#noRepeatDays").value = state.settings.noRepeatDays;
-  const list = $("#historyList");
-  if (!state.history.length) { list.innerHTML = `<li class="empty">還沒有紀錄。抽到後按「就吃這家」就會記在這裡。</li>`; return; }
-  list.innerHTML = state.history.map(h => `
-    <li>
-      <div class="main">
-        <div class="title">${esc(h.name)}</div>
-        <div class="sub">${fmtDate(h.at)}　${esc(h.city || "")} ${esc(h.district || "")}</div>
-      </div>
-      <button class="icon-btn" data-action="del-history" data-id="${esc(h.id)}" aria-label="刪除">🗑️</button>
-    </li>`).join("");
-}
-
-/* =========================================================
-   10. 畫面：管理餐廳
-   ========================================================= */
-function renderManage() {
-  const cs = cities();
-  $("#manageCity").innerHTML = `<option value="">全部縣市</option>` +
-    cs.map(([c, n]) => `<option value="${esc(c)}" ${c === state.manageCity ? "selected" : ""}>${esc(c)}（${n}）</option>`).join("");
-  const q = state.manageQuery.trim().toLowerCase();
-  const rows = state.restaurants
-    .filter(r => !state.manageCity || r.city === state.manageCity)
-    .filter(r => !q || r.name.toLowerCase().includes(q))
-    .sort((a, b) => (a.city + a.district + a.name).localeCompare(b.city + b.district + b.name, "zh-Hant"));
-  $("#manageList").innerHTML = rows.length ? rows.map(r => `
-    <li class="${r.paused ? "paused" : ""}">
-      <div class="main">
-        <div class="title">${esc(r.name)}</div>
-        <div class="sub">${esc(r.city)} ${esc(r.district)}　${esc(r.price)}　${r.tags.map(esc).join("、")}</div>
-      </div>
-      <button class="icon-btn ${r.favorite ? "fav-on" : ""}" data-action="toggle-fav" data-id="${esc(r.id)}" aria-label="最愛" title="最愛（抽中機率加倍）">${r.favorite ? "★" : "☆"}</button>
-      <button class="icon-btn ${r.paused ? "pause-on" : ""}" data-action="toggle-pause" data-id="${esc(r.id)}" aria-label="暫停" title="暫停（不會被抽到）">${r.paused ? "⏸" : "▶"}</button>
-      <button class="icon-btn" data-action="edit" data-id="${esc(r.id)}" aria-label="編輯">✏️</button>
-      <button class="icon-btn" data-action="delete" data-id="${esc(r.id)}" aria-label="刪除">🗑️</button>
-    </li>`).join("")
-    : `<li class="empty">${state.restaurants.length ? "找不到符合的餐廳" : "還沒有餐廳，點「新增餐廳」或「匯入 JSON」開始"}</li>`;
-
-  $("#tagManage").innerHTML = state.settings.tags.map(t =>
-    `<span class="chip">${esc(t)} <button class="icon-btn" style="width:22px;height:22px;font-size:13px" data-action="del-tag" data-v="${esc(t)}" aria-label="刪除標籤">✕</button></span>`).join("");
-}
-
-/* 編輯表單 */
-let editingId = null;
-let formPrice = "$$";
-let formTags = [];
-function openEdit(id) {
-  const r = id ? state.restaurants.find(x => x.id === id) : null;
-  editingId = r ? r.id : null;
-  const f = $("#editForm");
-  $("#editTitle").textContent = r ? "編輯餐廳" : "新增餐廳";
-  f.name.value = r?.name || ""; f.address.value = r?.address || "";
-  f.city.value = r?.city || ""; f.district.value = r?.district || "";
-  f.phone.value = r?.phone || ""; f.mapUrl.value = r?.mapUrl || "";
-  f.dishes.value = (r?.dishes || []).join("\n");
-  formPrice = r?.price || "$$"; formTags = [...(r?.tags || [])];
-  renderFormChips();
-  $("#formHours").innerHTML = FORM_DAY_ORDER.map(k => {
-    const v = r?.hours ? (r.hours[k]?.length ? r.hours[k].map(([s, e]) => `${s}-${e}`).join(", ") : "") : "";
-    return `<span>${DAY_NAMES[k]}</span><input type="text" data-day="${k}" value="${esc(v)}" placeholder="公休">`;
-  }).join("");
-  $("#editModal").classList.add("open");
-  setAutofill("可一次選多張，例如店家資訊一張、展開後的一週營業時間一張。辨識完請檢查再儲存。", false);
-  setTimeout(() => f.name.focus(), 50);
-}
-function renderFormChips() {
-  $("#formPrice").innerHTML = PRICES.map(p => `<button type="button" class="chip ${formPrice === p ? "on" : ""}" data-action="form-price" data-v="${p}">${PRICE_TEXT[p]}</button>`).join("");
-  $("#formTags").innerHTML = allTags().map(t => `<button type="button" class="chip ${formTags.includes(t) ? "on" : ""}" data-action="form-tag" data-v="${esc(t)}">${esc(t)}</button>`).join("");
-}
-function closeEdit() { $("#editModal").classList.remove("open"); }
-
-/* =========================================================
-   10-1. 截圖自動填入
-   先用 Gemini（Firebase AI Logic）辨識；失敗或沒登入時，改用瀏覽器內建的 OCR（Tesseract.js）
-   ========================================================= */
-const GEMINI_MODELS = ["gemini-3.5-flash-lite", "gemini-3.8-flash"];  // 依序嘗試
-const TESSERACT_URL = "https://cdn.jsdelivr.net/npm/tesseract.js@7.0.0/dist/tesseract.min.js";
-
-function setAutofill(msg, busy) {
-  $("#autofillStatus").textContent = msg;
-  document.querySelector(".autofill").classList.toggle("busy", !!busy);
-}
-
-/* 圖片縮小後轉成 base64（送給 Gemini 用，減少上傳量） */
-function imageToBase64(file, maxSide = 1600) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, maxSide / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(img.src);
-      resolve(c.toDataURL("image/jpeg", 0.9).split(",")[1]);
-    };
-    img.onerror = reject;
-    img.src = URL.createObjectURL(file);
-  });
-}
-
-async function extractWithGemini(files) {
-  const aiM = await import(`https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}/firebase-ai.js`);
-  const ai = aiM.getAI(fb.app, { backend: new aiM.GoogleAIBackend() });
-  const prompt = `你會看到 Google 地圖上某一家餐廳的截圖（可能有多張，都是同一家店）。
-請讀出資訊，只輸出一個 JSON 物件，不要有其他文字。欄位如下：
-{
-  "name": "店名",
-  "address": "完整地址（不含郵遞區號）",
-  "phone": "電話",
-  "price": "依每人消費判斷：約 200 元以下填 \"$\"，200～500 元填 \"$$\"，500 元以上填 \"$$$\"；看不出來填空字串",
-  "tags": ["從這些選項挑 1～3 個最符合的：${allTags().join("、")}"],
-  "dishes": ["畫面上看得到的熱門或推薦菜色，沒有就給空陣列"],
-  "hours": {"mon": "...", "tue": "...", "wed": "...", "thu": "...", "fri": "...", "sat": "...", "sun": "..."}
-}
-hours 的規則：用 24 小時制，格式像 "11:00-14:00, 17:00-21:00"；當天休息填 "公休"；24 小時營業填 "00:00-24:00"；
-截圖中沒有那一天的資訊就填 null；如果截圖完全沒有營業時間，hours 整個填 null。
-看不到的欄位填空字串，不要自己編造。`;
-  const parts = [prompt];
-  for (const f of files) parts.push({ inlineData: { data: await imageToBase64(f), mimeType: "image/jpeg" } });
-
-  let lastErr;
-  for (const name of GEMINI_MODELS) {
-    try {
-      const model = aiM.getGenerativeModel(ai, { model: name, generationConfig: { responseMimeType: "application/json", temperature: 0 } });
-      const res = await model.generateContent(parts);
-      const text = res.response.text().replace(/^```(json)?|```$/g, "").trim();
-      return JSON.parse(text);
-    } catch (e) { lastErr = e; console.warn("Gemini", name, e); }
-  }
-  throw lastErr;
-}
-
-/* ---------- 內建 OCR ---------- */
-let ocrWorker = null;
-function loadScript(src) {
-  return new Promise((resolve, reject) => {
-    if (window.Tesseract) return resolve();
-    const s = document.createElement("script");
-    s.src = src; s.onload = resolve; s.onerror = () => reject(new Error("無法載入文字辨識工具"));
-    document.head.appendChild(s);
-  });
-}
-async function ocrText(files) {
-  await loadScript(TESSERACT_URL);
-  if (!ocrWorker) {
-    setAutofill("第一次使用，正在下載中文辨識資料（約 5MB，只需下載一次）…", true);
-    ocrWorker = await window.Tesseract.createWorker("chi_tra+eng", 1, {
-      logger: m => { if (m.status === "recognizing text") setAutofill(`文字辨識中… ${Math.round(m.progress * 100)}%`, true); }
-    });
-  }
-  let all = "";
-  for (const f of files) { const { data } = await ocrWorker.recognize(f); all += "\n" + data.text; }
-  return all;
-}
-
-/* 把 OCR 認出的文字，用規則整理成欄位 */
-const CN_DAY = { "一": "mon", "二": "tue", "三": "wed", "四": "thu", "五": "fri", "六": "sat", "日": "sun", "天": "sun" };
-const TAG_KEYWORDS = [
-  ["日式", /日式|日本|拉麵|壽司|丼|定食|居酒屋|烏龍麵|咖哩/], ["韓式", /韓式|韓國|拌飯|部隊鍋|炸雞/],
-  ["火鍋", /火鍋|鍋物|麻辣鍋|涮涮/], ["燒烤", /燒肉|燒烤|串燒|烤肉/], ["早午餐", /早午餐|早餐/],
-  ["素食", /素食|蔬食|蔬菜料理/], ["甜點飲料", /甜點|咖啡|飲料|茶飲|冰品|豆花|手搖|蛋糕/],
-  ["東南亞", /泰式|泰國|越南|南洋|印度|馬來|新加坡/], ["美式/西式", /義大利|美式|漢堡|牛排|西式|披薩|餐酒館|法式/],
-  ["台式小吃", /小吃|便當|滷肉飯|魯肉飯|麵線|肉圓|台式|臺式|自助餐|快餐/], ["中式", /中式|中華|川菜|港式|餃|牛肉麵|點心|粵菜/]
-];
-function parseOcrText(raw) {
-  // 全形轉半形、去掉中文字之間多餘的空白
-  let t = raw.replace(/[\uFF01-\uFF5E]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/\u3000/g, " ");
-  t = t.replace(/([\u4e00-\u9fff])[ \t]+(?=[\u4e00-\u9fff])/g, "$1").replace(/臺/g, "台");
-  const lines = t.split(/\n/).map(s => s.trim()).filter(Boolean);
-  const out = { name: "", address: "", phone: "", price: "", tags: [], dishes: [], hours: null };
-
-  const phone = t.match(/(\+886[\s-]?\d[\d\s-]{7,11}\d|0\d{1,3}[\s-]?\d{3,4}[\s-]?\d{3,4})/);
-  if (phone) out.phone = phone[1].replace(/\s+/g, " ").trim();
-
-  const addrLine = lines.find(l => /(台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|苗栗|彰化|南投|雲林|屏東|宜蘭|花蓮|台東|澎湖|金門|連江)[市縣].{1,4}?[區鄉鎮市]/.test(l));
-  if (addrLine) {
-    const m = addrLine.match(/((台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|苗栗|彰化|南投|雲林|屏東|宜蘭|花蓮|台東|澎湖|金門|連江)[市縣].*)$/);
-    out.address = m ? m[1].replace(/\s+/g, "") : addrLine;
-  }
-
-  const pr = t.match(/\$\s?([\d,]+)\s*[-–~至]\s*\$?\s?([\d,]+)/) || t.match(/\$\s?([\d,]+)\s*\+/);
-  if (pr) {
-    const nums = [pr[1], pr[2]].filter(Boolean).map(n => Number(n.replace(/,/g, "")));
-    const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
-    out.price = avg < 200 ? "$" : avg <= 500 ? "$$" : "$$$";
-  } else {
-    const sym = t.match(/(^|[\s·・])(\${1,4})(?=[\s·・]|$)/m);
-    if (sym) out.price = sym[2].length <= 1 ? "$" : sym[2].length === 2 ? "$$" : "$$$";
-  }
-
-  out.tags = TAG_KEYWORDS.filter(([tag, re]) => re.test(t) && allTags().includes(tag)).map(([tag]) => tag).slice(0, 3);
-
-  // 營業時間：找出「星期一 / 週一」等標記，取到下一個標記之前的文字來解析
-  const marks = [...t.matchAll(/(星期|週|周|禮拜)([一二三四五六日天])/g)];
-  if (marks.length) {
-    const hours = {};
-    marks.forEach((m, i) => {
-      const key = CN_DAY[m[2]];
-      const seg = t.slice(m.index + m[0].length, i + 1 < marks.length ? marks[i + 1].index : m.index + 120);
-      if (hours[key] !== undefined) return;
-      if (/24\s*小時/.test(seg)) { hours[key] = "00:00-24:00"; return; }
-      if (/休息|公休|未營業/.test(seg) && !/\d{1,2}[:.]\d{2}/.test(seg)) { hours[key] = "公休"; return; }
-      const times = [...seg.matchAll(/(上午|下午|中午|晚上|凌晨)?\s*(\d{1,2})[:.](\d{2})/g)].map(x => {
-        let h = Number(x[2]);
-        if ((x[1] === "下午" || x[1] === "晚上") && h < 12) h += 12;
-        return { h, m: x[3], p: x[1] };
-      });
-      const segs = [];
-      for (let j = 0; j + 1 < times.length; j += 2) {
-        const a = times[j], b = times[j + 1];
-        if (!b.p && (a.p === "下午" || a.p === "晚上") && b.h < 12 && b.h + 12 > a.h) b.h += 12;
-        segs.push(`${String(a.h).padStart(2, "0")}:${a.m}-${String(b.h).padStart(2, "0")}:${b.m}`);
-      }
-      if (segs.length) hours[key] = segs.join(", ");
-    });
-    if (Object.keys(hours).length) out.hours = hours;
-  }
-
-  // 店名：挑第一行「像店名」的文字（排除評分、價位、地址、按鈕文字等）
-  const skip = /路線|儲存|附近|傳送|分享|總覽|評論|簡介|菜單|相片|搜尋|Google|營業|休息|星期|週|\$|★|\d\.\d|\(\d|市.{1,4}區|電話|網站|預訂|外送|外帶|內用|google/i;
-  out.name = lines.find(l => /[\u4e00-\u9fff]/.test(l) && l.length >= 2 && l.length <= 30 && !skip.test(l) && !/^\d/.test(l)) || "";
-  return out;
-}
-
-/* 把辨識結果填進表單：空白欄位才填，營業時間有抓到就覆蓋 */
-function applyExtracted(d) {
-  const f = $("#editForm");
-  const filled = [];
-  const put = (field, val, label) => {
-    val = String(val || "").trim();
-    if (val && !f[field].value.trim()) { f[field].value = val; filled.push(label); }
+// ===== 音效（Web Audio API 即時產生，不需要音檔） =====
+const sound = (() => {
+  let ctx = null, noiseBuf = null;
+  const unlock = () => {
+    if (!ctx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      ctx = new AC();
+      noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 0.3, ctx.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state === "suspended") ctx.resume();
   };
-  put("name", d.name, "店名");
-  put("address", d.address, "地址");
-  const p = parseAddress(f.address.value);
-  put("city", d.city || p.city, "縣市");
-  put("district", d.district || p.district, "區");
-  put("phone", d.phone, "電話");
-  if (Array.isArray(d.dishes) && d.dishes.length && !f.dishes.value.trim()) { f.dishes.value = d.dishes.join("\n"); filled.push("推薦餐點"); }
-  if (PRICES.includes(d.price)) { formPrice = d.price; filled.push("價位"); }
-  if (Array.isArray(d.tags)) {
-    const valid = d.tags.filter(t => allTags().includes(t) && !formTags.includes(t));
-    if (valid.length) { formTags = [...formTags, ...valid]; filled.push("類型"); }
-  }
-  if (d.hours && typeof d.hours === "object") {
-    let any = false;
-    f.querySelectorAll("[data-day]").forEach(inp => {
-      const v = d.hours[inp.dataset.day];
-      if (v === null || v === undefined) return;
-      const segs = parseSegs(v);
-      inp.value = segs.map(([s, e]) => `${s}-${e}`).join(", ");
-      any = true;
-    });
-    if (any) filled.push("營業時間");
-  }
-  renderFormChips();
-  return filled;
-}
-
-async function autofillFromImages(files) {
-  if (!files.length) return;
-  let data = null, via = "";
-  try {
-    if (state.mode === "owner" && fb) {
-      setAutofill("AI 辨識中，請稍候…", true);
-      try { data = await extractWithGemini(files); via = "AI"; }
-      catch (e) {
-        const why = /api-not-enabled|not enabled|has not been used/i.test(String(e.message)) ? "Firebase 尚未開啟 AI Logic"
-          : /quota|429|resource-exhausted/i.test(String(e.message)) ? "今日免費額度已用完" : "AI 暫時無法使用";
-        setAutofill(`${why}，改用內建文字辨識…`, true);
-      }
+  const ok = () => ctx && !state.muted;
+  const tone = (freq, start, dur, type = "triangle", vol = 0.2) => {
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, start);
+    g.gain.exponentialRampToValueAtTime(0.001, start + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start(start); o.stop(start + dur + 0.02);
+  };
+  return {
+    unlock,
+    tick() {   // 轉輪「喀」
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      tone(1500 + Math.random() * 300, t, 0.035, "square", 0.05);
+    },
+    ding() {   // 停止「叮！」
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      [1047, 1319, 1568, 2093].forEach((f, i) => tone(f, t + i * 0.09, 0.6, "triangle", 0.18));
+      tone(2093, t + 0.36, 1.0, "sine", 0.12);
+    },
+    clank() {  // 拉桿「喀鏘」
+      if (!ok()) return;
+      const t = ctx.currentTime;
+      const src = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      src.buffer = noiseBuf; f.type = "bandpass"; f.frequency.value = 2200; f.Q.value = 1.2;
+      g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+      src.connect(f).connect(g).connect(ctx.destination); src.start(t); src.stop(t + 0.2);
+      const o = ctx.createOscillator(), g2 = ctx.createGain();
+      o.type = "sine"; o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(70, t + 0.2);
+      g2.gain.setValueAtTime(0.35, t); g2.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+      o.connect(g2).connect(ctx.destination); o.start(t); o.stop(t + 0.3);
+    },
+    buzz() {   // 沒有符合的店
+      unlock(); if (!ok()) return;
+      const t = ctx.currentTime;
+      tone(140, t, 0.25, "sawtooth", 0.12); tone(110, t + 0.22, 0.3, "sawtooth", 0.12);
     }
-    if (!data) { data = parseOcrText(await ocrText(files)); via = "內建文字辨識"; }
-    const filled = applyExtracted(data);
-    setAutofill(filled.length
-      ? `已用${via}填入：${filled.join("、")}。請檢查是否正確，再補上沒抓到的欄位。`
-      : `${via}沒有讀到可用的資訊，請換一張更清楚的截圖，或手動填寫。`, false);
-  } catch (e) {
-    console.error(e);
-    setAutofill("辨識失敗：" + (e.message || e) + "。請手動填寫。", false);
-  }
-}
-async function submitEdit(e) {
-  e.preventDefault();
-  const f = $("#editForm");
-  const old = editingId ? state.restaurants.find(x => x.id === editingId) : {};
-  const hours = {};
-  f.querySelectorAll("[data-day]").forEach(inp => hours[inp.dataset.day] = parseSegs(inp.value));
-  const r = normalizeRestaurant({
-    ...old, id: editingId || undefined,
-    name: f.name.value, address: f.address.value.trim(),
-    city: f.city.value.trim(), district: f.district.value.trim(),
-    phone: f.phone.value.trim(), mapUrl: f.mapUrl.value.trim(),
-    dishes: f.dishes.value, price: formPrice, tags: formTags, hours
+  };
+})();
+
+function setupMute() {
+  try { state.muted = localStorage.getItem("eat-muted") === "1"; } catch (e) {}
+  const paint = () => $("muteBtn").textContent = state.muted ? "🔇" : "🔊";
+  paint();
+  $("muteBtn").addEventListener("click", () => {
+    state.muted = !state.muted; paint();
+    try { localStorage.setItem("eat-muted", state.muted ? "1" : "0"); } catch (e) {}
+    if (!state.muted) { sound.unlock(); sound.tick(); }
   });
-  if (!r.name) { toast("請填店名"); return; }
-  if (!r.city) { toast("請填縣市（或填完整地址）"); return; }
-  await safe(() => store.saveRestaurant(r), editingId ? "已更新" : "已新增");
-  closeEdit(); renderAll();
 }
 
-/* 匯入、匯出 */
-async function importFile(file) {
-  try {
-    const data = JSON.parse(await file.text());
-    const arr = Array.isArray(data) ? data : (data.restaurants || []);
-    const list = arr.map(normalizeRestaurant).filter(r => r.name);
-    if (!list.length) { toast("檔案裡沒有餐廳資料"); return; }
-    if (!confirm(`要匯入 ${list.length} 家餐廳嗎？（id 相同的會被覆蓋）`)) return;
-    await safe(() => store.bulkSave(list), `已匯入 ${list.length} 家`);
-    if (Array.isArray(data.history) && confirm(`檔案中也有 ${data.history.length} 筆吃過紀錄，要一起匯入嗎？`)) {
-      for (const h of data.history) if (!state.history.some(x => x.id === h.id)) await safe(() => store.addHistory(h));
-      state.history.sort((a, b) => b.at - a.at);
-    }
-    restoreSelection(); renderAll();
-  } catch (e) { console.error(e); toast("無法讀取檔案，請確認是 JSON 格式"); }
-}
-function exportJson() {
-  const data = { version: 1, exportedAt: new Date().toISOString(), restaurants: state.restaurants, history: state.history, settings: state.settings };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `今天吃什麼_備份_${new Date().toISOString().slice(0, 10)}.json`;
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+// ===== 時鐘 =====
+function tickClock() {
+  const n = new Date();
+  $("clock").textContent = `${n.getFullYear()}/${n.getMonth() + 1}/${n.getDate()}（${DAY_NAMES[n.getDay()]}）${String(n.getHours()).padStart(2, "0")}:${String(n.getMinutes()).padStart(2, "0")}`;
 }
 
-/* =========================================================
-   11. 頁首、模式提示、整體重繪
-   ========================================================= */
-function renderUser() {
-  const box = $("#userBox");
-  if (state.mode === "owner") {
-    const u = state.user;
-    box.innerHTML = `<div class="avatar">${u.photoURL ? `<img src="${esc(u.photoURL)}" alt="" referrerpolicy="no-referrer">` : esc((u.displayName || "我")[0])}</div>
-      <button class="btn small" data-action="logout">登出</button>`;
-  } else if (state.mode === "public") {
-    box.innerHTML = `<button class="btn small ghost" data-action="login">管理者登入</button>`;
-  } else if (state.mode === "demo") {
-    box.innerHTML = `<span>示範模式</span>`;
-  } else {
-    box.innerHTML = `<span>載入中…</span>`;
-  }
-  // 只有管理者（或示範模式）看得到「管理餐廳」
-  const manageNav = document.querySelector('.nav-btn[data-page="manage"]');
-  manageNav.hidden = !canEdit();
-  if (!canEdit() && $("#page-manage").classList.contains("active")) showPage("draw");
-
-  const msg = state.mode === "demo"
-    ? (firebaseConfig.apiKey ? "目前無法連線到資料庫，先顯示虛構的示範餐廳，修改不會儲存。"
-                             : "目前是示範模式（尚未設定 Firebase），顯示的是虛構餐廳，修改不會儲存。")
-    : "";
-  ["#demoBanner", "#manageBanner"].forEach(id => { $(id).hidden = !msg; $(id).textContent = msg; });
-  $("#historyHint").textContent = state.mode === "owner" ? "紀錄存在雲端，換裝置登入也看得到。"
-    : state.mode === "public" ? "紀錄只存在這台裝置的瀏覽器。" : "";
-}
-function renderAll() { renderUser(); renderDraw(); renderHistory(); renderManage(); }
-
-function showPage(name) {
-  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + name));
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.page === name));
-  window.scrollTo({ top: 0 });
-}
-
-/* =========================================================
-   12. 事件（用 data-action 統一處理點擊）
-   ========================================================= */
-document.addEventListener("click", async e => {
-  const nav = e.target.closest(".nav-btn");
-  if (nav) { showPage(nav.dataset.page); return; }
-  const el = e.target.closest("[data-action]");
-  if (!el) return;
-  const { action, v, id } = el.dataset;
-  const s = state.sel;
-  const resetDraw = () => { state.skipped.clear(); state.resultId = null; renderDraw(); };
-
-  const EDIT_ACTIONS = ["add", "edit", "delete", "toggle-fav", "toggle-pause", "add-tag", "del-tag", "import"];
-  if (EDIT_ACTIONS.includes(action) && !canEdit()) { toast("只有管理者可以修改餐廳"); return; }
-
-  switch (action) {
-    case "spin": spin(); break;
-    case "district":
-      s.districts = s.districts.includes(v) ? s.districts.filter(x => x !== v) : [...s.districts, v];
-      rememberSelection(); resetDraw(); break;
-    case "district-all": {
-      const all = districtsOf(s.city).map(d => d[0]);
-      s.districts = all.every(d => s.districts.includes(d)) ? [] : all;
-      rememberSelection(); resetDraw(); break;
-    }
-    case "tag": s.tags = s.tags.includes(v) ? s.tags.filter(x => x !== v) : [...s.tags, v]; renderDraw(); break;
-    case "price": s.prices = s.prices.includes(v) ? s.prices.filter(x => x !== v) : [...s.prices, v]; renderDraw(); break;
-    case "clear-skip": state.skipped.clear(); renderDraw(); break;
-    case "ignore-recent": state.ignoreRecent = true; renderDraw(); break;
-    case "restore-recent": state.ignoreRecent = false; renderDraw(); break;
-    case "reject":
-      if (state.resultId) state.skipped.add(state.resultId);
-      state.resultId = null; renderDraw();
-      if (computeCandidates().final.length) spin(); else toast("沒有其他符合條件的餐廳了");
-      break;
-    case "eat": {
-      const r = state.restaurants.find(x => x.id === state.resultId);
-      if (!r) break;
-      await safe(() => store.addHistory({ id: newId(), rid: r.id, name: r.name, city: r.city, district: r.district, at: Date.now() }),
-        state.mode === "owner" ? `已記錄：${r.name}，祝用餐愉快！`
-          : state.mode === "public" ? `已記錄：${r.name}（存在這台裝置）` : `已記錄：${r.name}（示範模式不會儲存）`);
-      state.resultId = null; state.skipped.clear(); state.ignoreRecent = false;
-      renderAll(); break;
-    }
-    case "del-history":
-      if (confirm("要刪除這筆紀錄嗎？")) { await safe(() => store.deleteHistory(id)); renderAll(); }
-      break;
-    case "add": openEdit(null); break;
-    case "edit": openEdit(id); break;
-    case "delete": {
-      const r = state.restaurants.find(x => x.id === id);
-      if (r && confirm(`要刪除「${r.name}」嗎？`)) { await safe(() => store.deleteRestaurant(id), "已刪除"); restoreSelectionKeep(); renderAll(); }
-      break;
-    }
-    case "toggle-fav": case "toggle-pause": {
-      const r = state.restaurants.find(x => x.id === id);
-      if (!r) break;
-      const key = action === "toggle-fav" ? "favorite" : "paused";
-      await safe(() => store.saveRestaurant({ ...r, [key]: !r[key] }));
-      renderAll(); break;
-    }
-    case "close-modal": closeEdit(); break;
-    case "form-price": formPrice = v; renderFormChips(); break;
-    case "form-tag": formTags = formTags.includes(v) ? formTags.filter(x => x !== v) : [...formTags, v]; renderFormChips(); break;
-    case "add-tag": {
-      const t = $("#newTagInput").value.trim();
-      if (!t) break;
-      if (!state.settings.tags.includes(t)) { state.settings.tags = [...state.settings.tags, t]; await safe(() => store.saveTags()); }
-      $("#newTagInput").value = ""; renderAll(); break;
-    }
-    case "del-tag":
-      if (confirm(`要從清單移除「${v}」嗎？（已標記的餐廳不受影響）`)) {
-        state.settings.tags = state.settings.tags.filter(x => x !== v);
-        s.tags = s.tags.filter(x => x !== v);
-        await safe(() => store.saveTags()); renderAll();
-      }
-      break;
-    case "import": $("#importFile").click(); break;
-    case "export": exportJson(); break;
-    case "login": login(); break;
-    case "logout": logout(); break;
-  }
+// ===== 啟動 =====
+buildChips();
+setupLever();
+setupMute();
+idleReel();
+buildBulbs();
+tickClock();
+refresh();
+setInterval(() => { tickClock(); if (!state.spinning) refresh(); }, 30000);
+window.addEventListener("resize", buildBulbs);
+$("list").addEventListener("click", e => {
+  const c = e.target.closest(".card"); if (!c || state.spinning) return;
+  showResult(RESTAURANTS[Number(c.dataset.idx)], false);
 });
-/* 刪除餐廳後，若目前選的縣市已沒有餐廳，改選其他縣市 */
-function restoreSelectionKeep() {
-  if (!cities().some(([c]) => c === state.sel.city)) restoreSelection();
-  const ds = districtsOf(state.sel.city).map(d => d[0]);
-  state.sel.districts = state.sel.districts.filter(d => ds.includes(d));
-}
-
-$("#citySelect").addEventListener("change", e => {
-  state.sel.city = e.target.value; state.sel.districts = [];
-  rememberSelection(); state.skipped.clear(); state.resultId = null; renderDraw();
-});
-$("#openNowToggle").addEventListener("change", e => { state.sel.openNow = e.target.checked; renderDraw(); });
-$("#noRepeatDays").addEventListener("change", e => {
-  state.settings.noRepeatDays = Math.max(0, Math.min(30, Number(e.target.value) || 0));
-  store.savePrefs(); toast("已更新設定"); renderAll();
-});
-$("#manageSearch").addEventListener("input", e => { state.manageQuery = e.target.value; renderManage(); });
-$("#manageCity").addEventListener("change", e => { state.manageCity = e.target.value; renderManage(); });
-$("#importFile").addEventListener("change", e => { const f = e.target.files[0]; if (f) importFile(f); e.target.value = ""; });
-$("#editForm").addEventListener("submit", submitEdit);
-$("#editForm").address.addEventListener("blur", e => {
-  const f = $("#editForm"), p = parseAddress(e.target.value);
-  if (p.city && !f.city.value) f.city.value = p.city;
-  if (p.district && !f.district.value) f.district.value = p.district;
-});
-$("#editModal").addEventListener("click", e => { if (e.target.id === "editModal") closeEdit(); });
-$("#shotInput").addEventListener("change", e => { const files = [...e.target.files]; e.target.value = ""; autofillFromImages(files); });
-$("#newTagInput").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); document.querySelector('[data-action="add-tag"]').click(); } });
-
-/* 每分鐘更新一次「營業中」判斷 */
-setInterval(() => { if (!state.spinning) { renderCount(); renderIdleReel(); } }, 60000);
-
-/* =========================================================
-   13. 啟動
-   ========================================================= */
-if (firebaseConfig.apiKey) {
-  state.mode = "loading"; state.restaurants = []; state.settings = { ...structuredClone(DEFAULT_SETTINGS), ...loadPrefs() };
-} else loadDemo();
-restoreSelection();
-renderAll();
-initFirebase().catch(e => {
-  console.error(e); toast("無法連線到資料庫，先以示範資料運作");
-  loadDemo(); restoreSelection(); renderAll();
-});
+$("overlay").addEventListener("click", e => { if (e.target === $("overlay")) closeResult(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeResult(); });
 </script>
 </body>
 </html>
